@@ -1,0 +1,674 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BugFlow - Software Issue Tracking & Resolution Platform</title>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700;800&display=swap"
+        rel="stylesheet">
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Chart.js CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="stylesheet" href="/static/styles.css">
+</head>
+
+<body>
+
+    <!-- ================= AUTH PAGE (LOGIN / REGISTER) ================= -->
+    <div id="auth-page" class="auth-container">
+        <div class="auth-card">
+            <div class="auth-header">
+                <div class="auth-logo">BF</div>
+                <h2>BugFlow</h2>
+                <p>Software Issue Tracking & Resolution Platform</p>
+            </div>
+
+            <!-- Login Form -->
+            <form id="login-form" class="auth-form active">
+                <h3>Account Login</h3>
+                <div class="input-group">
+                    <label for="login-email">Email Address</label>
+                    <div class="input-wrapper">
+                        <i class="fa-solid fa-envelope"></i>
+                        <input type="email" id="login-email" required placeholder="name@example.com">
+                    </div>
+                </div>
+                <div class="input-group">
+                    <label for="login-password">Password</label>
+                    <div class="input-wrapper">
+                        <i class="fa-solid fa-lock"></i>
+                        <input type="password" id="login-password" required placeholder="••••••••">
+                    </div>
+                </div>
+                <button type="submit" class="btn btn-primary btn-block">
+                    Sign In <i class="fa-solid fa-arrow-right-to-bracket"></i>
+                </button>
+                <p class="auth-switch">Don't have an account? <a href="#" id="switch-to-register">Register here</a></p>
+            </form>
+
+            <!-- Register Form -->
+            <form id="register-form" class="auth-form">
+                <h3>Create Account</h3>
+                <div class="input-group">
+                    <label for="register-name">Full Name</label>
+                    <div class="input-wrapper">
+                        <i class="fa-solid fa-user"></i>
+                        <input type="text" id="register-name" required placeholder="John Doe">
+                    </div>
+                </div>
+                <div class="input-group">
+                    <label for="register-email">Email Address</label>
+                    <div class="input-wrapper">
+                        <i class="fa-solid fa-envelope"></i>
+                        <input type="email" id="register-email" required placeholder="john@example.com">
+                    </div>
+                </div>
+                <div class="input-group">
+                    <label for="register-password">Password</label>
+                    <div class="input-wrapper">
+                        <i class="fa-solid fa-lock"></i>
+                        <input type="password" id="register-password" required minlength="6"
+                            placeholder="Min. 6 characters">
+                    </div>
+                </div>
+                <div class="input-group">
+                    <label for="register-role">System Role</label>
+                    <div class="input-wrapper">
+                        <i class="fa-solid fa-user-gear"></i>
+                        <select id="register-role">
+                            <option value="USER">USER (Reporter / View Only)</option>
+                            <option value="DEVELOPER">DEVELOPER (Work On Issues)</option>
+                            <option value="TESTER">TESTER (QA verification)</option>
+                            <option value="PROJECT_MANAGER">PROJECT_MANAGER (Manage Projects/Assign)</option>
+                            <option value="ADMIN">ADMIN (System Administrator)</option>
+                        </select>
+                    </div>
+                </div>
+                <button type="submit" class="btn btn-primary btn-block">
+                    Register Account <i class="fa-solid fa-user-plus"></i>
+                </button>
+                <p class="auth-switch">Already have an account? <a href="#" id="switch-to-login">Login here</a></p>
+            </form>
+        </div>
+    </div>
+
+    <!-- ================= MAIN APP LAYOUT (SIDENAV + MAIN CONTENT) ================= -->
+    <div id="main-app" class="app-layout" style="display: none;">
+
+        <!-- SIDEBAR NAV (Matches Image 2) -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <div class="logo-box">
+                    <i class="fa-solid fa-bug-slash logo-icon"></i>
+                    <div class="logo-text">
+                        <span class="logo-title">BugFlow</span>
+                        <span class="logo-subtitle">ISSUE TRACKER</span>
+                    </div>
+                </div>
+            </div>
+
+            <nav class="sidebar-nav">
+                <div class="nav-section-label">MAIN</div>
+                <a href="#" class="nav-item active" data-view="dashboard-view" id="nav-dashboard">
+                    <i class="fa-solid fa-chart-pie"></i> Dashboard
+                </a>
+                <a href="#" class="nav-item" data-view="issues-view" id="nav-issues">
+                    <i class="fa-solid fa-list-check"></i> Issues
+                </a>
+                <a href="#" class="nav-item" data-view="new-issue-view" id="nav-new-issue">
+                    <i class="fa-solid fa-plus-circle"></i> New Issue
+                </a>
+                <a href="#" class="nav-item disabled" title="Available in Milestone 2">
+                    <i class="fa-solid fa-arrows-spin"></i> Sprints
+                </a>
+                <a href="#" class="nav-item" data-view="projects-view" id="nav-projects">
+                    <i class="fa-solid fa-folder-open"></i> Projects
+                </a>
+
+                <div class="nav-section-label">INSIGHTS</div>
+                <a href="#" class="nav-item" data-view="reports-view" id="nav-reports">
+                    <i class="fa-solid fa-chart-line"></i> Reports
+                </a>
+                <a href="#" class="nav-item disabled" title="Available in Milestone 2">
+                    <i class="fa-solid fa-diagram-project"></i> Workflow
+                </a>
+
+                <div class="nav-section-label">SYSTEM</div>
+                <a href="#" class="nav-item" data-view="team-view" id="nav-team">
+                    <i class="fa-solid fa-users"></i> Team
+                </a>
+            </nav>
+
+            <!-- User Profile block at bottom of Sidenav -->
+            <div class="sidebar-profile">
+                <div class="profile-avatar" id="sidebar-avatar">AR</div>
+                <div class="profile-info">
+                    <span class="profile-name" id="sidebar-name">Alex Rivera</span>
+                    <span class="profile-role" id="sidebar-role">Admin</span>
+                </div>
+                <button class="btn-logout" id="btn-logout" title="Sign Out">
+                    <i class="fa-solid fa-arrow-right-from-bracket"></i>
+                </button>
+            </div>
+        </aside>
+
+        <!-- MAIN CONTENT PANEL -->
+        <main class="content-panel">
+
+            <!-- 1. DASHBOARD VIEW (Matches Image 1 layout) -->
+            <div id="dashboard-view" class="app-view active">
+
+                <!-- TOP HEADER CONTAINER -->
+                <div class="header-card">
+                    <div class="header-details">
+                        <div class="bf-icon">BF</div>
+                        <div class="header-title-wrapper">
+                            <h1>BugFlow</h1>
+                            <p>Software Issue Tracking & Resolution Platform (FastAPI + PostgreSQL)</p>
+                        </div>
+                    </div>
+
+                    <div class="header-controls">
+                        <!-- Auth configured badge -->
+                        <div class="badge badge-auth" id="header-auth-badge">
+                            Auth: Role-based configured for ADMIN (System Administrator)
+                        </div>
+
+                        <!-- Role simulation dropdown -->
+                        <div class="role-simulator">
+                            <select id="simulated-user-select" title="Simulate different users">
+                                <!-- Populated dynamically by javascript -->
+                            </select>
+                        </div>
+
+                        <!-- Swagger link -->
+                        <a href="/docs" target="_blank" class="btn btn-dark">
+                            Swagger /docs
+                        </a>
+                    </div>
+                </div>
+
+                <!-- MILESTONE SELECTOR TABS -->
+                <div class="milestone-tabs">
+                    <button class="milestone-tab active" data-milestone="1">Milestone 1: Foundation & Base
+                        Modules</button>
+                </div>
+
+                <!-- TWO COLUMN WORKSPACE (IMAGE 1 STYLE) -->
+                <div class="two-column-workspace">
+
+                    <!-- Left Panel: Issue Creation -->
+                    <div class="workspace-column left-col">
+                        <div class="column-header">
+                            <h2>Issue Creation & Auto-Triage</h2>
+                            <span class="badge badge-info">Auto-Triage Suggestion</span>
+                        </div>
+                        <div class="panel-card">
+                            <form id="dashboard-create-issue-form">
+                                <div class="form-group">
+                                    <label for="issue-project-select">Project</label>
+                                    <select id="issue-project-select" required>
+                                        <!-- Populated dynamically -->
+                                    </select>
+                                </div>
+
+                                <div class="form-group">
+                                    <label for="issue-title-input">Issue Title</label>
+                                    <input type="text" id="issue-title-input" required
+                                        placeholder="Summarize the issue...">
+                                    <!-- Duplicate Warning alert -->
+                                    <div class="warning-box" id="duplicate-warning" style="display: none;">
+                                        <i class="fa-solid fa-triangle-exclamation"></i>
+                                        <span id="duplicate-warning-text">Warning: Potential duplicate of B-007</span>
+                                    </div>
+                                </div>
+
+                                <div class="form-group">
+                                    <label for="issue-desc-textarea">Description & Steps to Reproduce</label>
+                                    <textarea id="issue-desc-textarea" rows="5" required
+                                        placeholder="Provide detail reproduction steps, expected behavior and error context..."></textarea>
+                                </div>
+
+                                <div class="form-row">
+                                    <div class="form-group col-3">
+                                        <label for="issue-type-select">Type</label>
+                                        <select id="issue-type-select">
+                                            <option value="BUG">BUG</option>
+                                            <option value="FEATURE">FEATURE</option>
+                                            <option value="ENHANCEMENT">ENHANCEMENT</option>
+                                            <option value="TASK">TASK</option>
+                                        </select>
+                                    </div>
+                                    <div class="form-group col-3">
+                                        <label for="issue-priority-select">Priority</label>
+                                        <select id="issue-priority-select">
+                                            <option value="LOW">LOW</option>
+                                            <option value="MEDIUM" selected>MEDIUM</option>
+                                            <option value="HIGH">HIGH</option>
+                                            <option value="CRITICAL">CRITICAL</option>
+                                        </select>
+                                    </div>
+                                    <div class="form-group col-3">
+                                        <label for="issue-severity-select">Severity</label>
+                                        <select id="issue-severity-select">
+                                            <option value="LOW">LOW</option>
+                                            <option value="MEDIUM" selected>MEDIUM</option>
+                                            <option value="HIGH">HIGH</option>
+                                            <option value="CRITICAL">CRITICAL</option>
+                                        </select>
+                                    </div>
+                                </div>
+
+                                <button type="submit" class="btn btn-primary" id="btn-create-issue">
+                                    Create & Log Issue <i class="fa-solid fa-paper-plane"></i>
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+
+                    <!-- Right Panel: Basic Dashboard / Active Issues -->
+                    <div class="workspace-column right-col">
+                        <div class="column-header">
+                            <h2>Basic Dashboard (Active Issues)</h2>
+                            <div class="header-actions">
+                                <input type="text" id="dashboard-issue-search" placeholder="Search issues..."
+                                    class="search-input">
+                                <button class="btn btn-secondary btn-icon" id="btn-refresh-dashboard" title="Refresh">
+                                    <i class="fa-solid fa-arrows-rotate"></i> Refresh
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- List of issue cards -->
+                        <div class="issues-card-list" id="dashboard-issues-list">
+                            <!-- Rendered dynamically -->
+                            <div class="empty-state">
+                                <i class="fa-solid fa-clipboard-list"></i>
+                                <p>Select or create a project to display issues.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 2. ALL ISSUES VIEW (Matches Image 2 Layout) -->
+            <div id="issues-view" class="app-view">
+                <div class="view-header">
+                    <div>
+                        <h1>All Issues</h1>
+                        <p class="view-subtitle">Create, assign, prioritize and track issues</p>
+                    </div>
+                    <div class="header-actions">
+                        <select id="issues-filter-project" class="filter-select" title="Select Project">
+                            <!-- Populated dynamically -->
+                        </select>
+                        <select id="issues-filter-status" class="filter-select" title="Status Filter">
+                            <option value="">All Statuses</option>
+                            <option value="OPEN">OPEN</option>
+                            <option value="IN_PROGRESS">IN_PROGRESS</option>
+                            <option value="RESOLVED">RESOLVED</option>
+                            <option value="CLOSED">CLOSED</option>
+                            <option value="REOPENED">REOPENED</option>
+                        </select>
+                        <select id="issues-filter-priority" class="filter-select" title="Priority Filter">
+                            <option value="">All Priorities</option>
+                            <option value="LOW">LOW</option>
+                            <option value="MEDIUM">MEDIUM</option>
+                            <option value="HIGH">HIGH</option>
+                            <option value="CRITICAL">CRITICAL</option>
+                        </select>
+                        <input type="text" id="issues-grid-search" placeholder="Search issues..." class="search-input">
+                        <button class="btn btn-primary" id="btn-new-issue-trigger">
+                            <i class="fa-solid fa-plus"></i> New Issue
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Table Container -->
+                <div class="table-container">
+                    <table class="issues-table">
+                        <thead>
+                            <tr>
+                                <th>Key</th>
+                                <th>Title</th>
+                                <th>Type</th>
+                                <th>Severity</th>
+                                <th>Priority</th>
+                                <th>Status</th>
+                                <th>Reporter</th>
+                                <th>Assignee</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="issues-table-body">
+                            <!-- Rendered dynamically -->
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Pagination footer -->
+                <div class="pagination-footer">
+                    <span class="pagination-info" id="pagination-info-text">Showing 0 to 0 of 0 entries</span>
+                    <div class="pagination-controls">
+                        <button class="btn btn-secondary btn-icon" id="btn-page-prev"><i
+                                class="fa-solid fa-chevron-left"></i></button>
+                        <span class="page-number-indicator" id="page-indicator">Page 1 of 1</span>
+                        <button class="btn btn-secondary btn-icon" id="btn-page-next"><i
+                                class="fa-solid fa-chevron-right"></i></button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 3. PROJECTS VIEW -->
+            <div id="projects-view" class="app-view">
+                <div class="view-header">
+                    <div>
+                        <h1>Projects</h1>
+                        <p class="view-subtitle">Create and manage software workspaces</p>
+                    </div>
+                </div>
+
+                <div class="two-column-workspace">
+                    <!-- Left: Create project -->
+                    <div class="workspace-column left-col">
+                        <div class="column-header">
+                            <h2>Create New Project</h2>
+                        </div>
+                        <div class="panel-card">
+                            <form id="project-create-form">
+                                <div class="form-group">
+                                    <label for="project-name-input">Project Name</label>
+                                    <input type="text" id="project-name-input" required
+                                        placeholder="e.g. BugFlow Backend">
+                                </div>
+                                <div class="form-group">
+                                    <label for="project-key-input">Project Key (Unique Uppercase)</label>
+                                    <input type="text" id="project-key-input" required placeholder="e.g. BUG"
+                                        maxlength="10">
+                                    <span class="form-help">Must contain capital alphanumeric characters only (e.g. PAY,
+                                        CRM).</span>
+                                </div>
+                                <div class="form-group">
+                                    <label for="project-desc-input">Description</label>
+                                    <textarea id="project-desc-input" rows="4"
+                                        placeholder="Brief project summary..."></textarea>
+                                </div>
+                                <button type="submit" class="btn btn-primary">
+                                    Create Project <i class="fa-solid fa-folder-plus"></i>
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+
+                    <!-- Right: Project List -->
+                    <div class="workspace-column right-col">
+                        <div class="column-header">
+                            <h2>Active Projects</h2>
+                        </div>
+                        <div class="projects-list-grid" id="projects-list-container">
+                            <!-- Rendered dynamically -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 4. NEW ISSUE VIEW -->
+            <div id="new-issue-view" class="app-view">
+                <div class="view-header">
+                    <div>
+                        <h1>File New Issue</h1>
+                        <p class="view-subtitle">Report a bug, task, or feature request</p>
+                    </div>
+                </div>
+                <div class="panel-card max-width-700">
+                    <form id="standalone-create-issue-form">
+                        <div class="form-group">
+                            <label for="standalone-project-select">Target Project</label>
+                            <select id="standalone-project-select" required>
+                                <!-- Populated dynamically -->
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="standalone-title-input">Issue Title</label>
+                            <input type="text" id="standalone-title-input" required
+                                placeholder="e.g. JWT token authentication fails with special characters">
+                        </div>
+
+                        <div class="form-group">
+                            <label for="standalone-desc-textarea">Description</label>
+                            <textarea id="standalone-desc-textarea" rows="6" required
+                                placeholder="Detail the bug report or task requirements..."></textarea>
+                        </div>
+
+                        <div class="form-row">
+                            <div class="form-group col-3">
+                                <label for="standalone-type-select">Issue Type</label>
+                                <select id="standalone-type-select">
+                                    <option value="BUG">BUG</option>
+                                    <option value="FEATURE">FEATURE</option>
+                                    <option value="ENHANCEMENT">ENHANCEMENT</option>
+                                    <option value="TASK">TASK</option>
+                                </select>
+                            </div>
+                            <div class="form-group col-3">
+                                <label for="standalone-priority-select">Priority</label>
+                                <select id="standalone-priority-select">
+                                    <option value="LOW">LOW</option>
+                                    <option value="MEDIUM" selected>MEDIUM</option>
+                                    <option value="HIGH">HIGH</option>
+                                    <option value="CRITICAL">CRITICAL</option>
+                                </select>
+                            </div>
+                            <div class="form-group col-3">
+                                <label for="standalone-severity-select">Severity</label>
+                                <select id="standalone-severity-select">
+                                    <option value="LOW">LOW</option>
+                                    <option value="MEDIUM" selected>MEDIUM</option>
+                                    <option value="HIGH">HIGH</option>
+                                    <option value="CRITICAL">CRITICAL</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <button type="submit" class="btn btn-primary">
+                            Submit Issue <i class="fa-solid fa-paper-plane"></i>
+                        </button>
+                    </form>
+                </div>
+            </div>
+
+            <!-- 5. REPORTS VIEW -->
+            <div id="reports-view" class="app-view">
+                <div class="view-header">
+                    <div>
+                        <h1>Insights & Dashboard Reports</h1>
+                        <p class="view-subtitle">Visual analytics of active issues and workload</p>
+                    </div>
+                    <div class="header-actions">
+                        <select id="reports-project-select" class="filter-select" title="Select Project">
+                            <!-- Populated dynamically -->
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Dashboard metrics counters -->
+                <div class="metrics-row" id="reports-metrics-row">
+                    <div class="metric-card">
+                        <span class="metric-title">Total Issues</span>
+                        <span class="metric-value" id="count-total">0</span>
+                    </div>
+                    <div class="metric-card">
+                        <span class="metric-title">Open Issues</span>
+                        <span class="metric-value color-open" id="count-open">0</span>
+                    </div>
+                    <div class="metric-card">
+                        <span class="metric-title">In Progress</span>
+                        <span class="metric-value color-progress" id="count-progress">0</span>
+                    </div>
+                    <div class="metric-card">
+                        <span class="metric-title">Resolved</span>
+                        <span class="metric-value color-resolved" id="count-resolved">0</span>
+                    </div>
+                    <div class="metric-card">
+                        <span class="metric-title">Closed</span>
+                        <span class="metric-value color-closed" id="count-closed">0</span>
+                    </div>
+                    <div class="metric-card bg-glow-red">
+                        <span class="metric-title">Critical</span>
+                        <span class="metric-value color-critical" id="count-critical">0</span>
+                    </div>
+                </div>
+
+                <!-- Charts layout container -->
+                <div class="charts-grid">
+                    <div class="chart-card">
+                        <h3>Status Distribution</h3>
+                        <div class="chart-wrapper">
+                            <canvas id="chart-status"></canvas>
+                        </div>
+                    </div>
+                    <div class="chart-card">
+                        <h3>Priority Breakdown</h3>
+                        <div class="chart-wrapper">
+                            <canvas id="chart-priority"></canvas>
+                        </div>
+                    </div>
+                    <div class="chart-card">
+                        <h3>Severity Distribution</h3>
+                        <div class="chart-wrapper">
+                            <canvas id="chart-severity"></canvas>
+                        </div>
+                    </div>
+                    <div class="chart-card">
+                        <h3>Issue Types</h3>
+                        <div class="chart-wrapper">
+                            <canvas id="chart-type"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 6. TEAM VIEW -->
+            <div id="team-view" class="app-view">
+                <div class="view-header">
+                    <div>
+                        <h1>Team Members</h1>
+                        <p class="view-subtitle">BugFlow users, role privileges, and assignments</p>
+                    </div>
+                </div>
+                <div class="table-container max-width-900">
+                    <table class="issues-table">
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>Email</th>
+                                <th>System Role</th>
+                                <th>Privileges</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody id="team-table-body">
+                            <!-- Rendered dynamically -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+        </main>
+    </div>
+
+    <!-- ================= DETAIL MODAL ================= -->
+    <div class="modal-backdrop" id="issue-detail-modal" style="display: none;">
+        <div class="modal-card">
+            <div class="modal-header">
+                <h2 id="modal-issue-key">B-001</h2>
+                <button class="btn-close-modal" id="btn-close-modal"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+
+            <div class="modal-body-layout">
+                <!-- Left: Description and Audit Logs -->
+                <div class="modal-body-left">
+                    <h3 id="modal-issue-title">Login button is not working</h3>
+                    <p class="modal-issue-type-badge"><span id="modal-issue-type">BUG</span></p>
+
+                    <div class="modal-section">
+                        <h4>Description</h4>
+                        <div class="desc-box" id="modal-issue-desc">
+                            The login button does not respond after entering valid credentials.
+                        </div>
+                    </div>
+
+                    <div class="modal-section">
+                        <h4>Issue Activity & Audit Trail</h4>
+                        <div class="audit-timeline" id="modal-issue-audit-timeline">
+                            <!-- Rendered dynamically -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Right: Details and Action Updates -->
+                <div class="modal-body-right">
+                    <div class="details-panel">
+                        <div class="detail-row">
+                            <span class="detail-label">Status</span>
+                            <span class="detail-value" id="modal-status-badge">OPEN</span>
+                        </div>
+                        <div class="detail-row">
+                            <span class="detail-label">Priority</span>
+                            <span class="detail-value" id="modal-priority-text">HIGH</span>
+                        </div>
+                        <div class="detail-row">
+                            <span class="detail-label">Severity</span>
+                            <span class="detail-value" id="modal-severity-text">HIGH</span>
+                        </div>
+                        <div class="detail-row">
+                            <span class="detail-label">Reporter</span>
+                            <span class="detail-value" id="modal-reporter-name">John Doe</span>
+                        </div>
+                        <div class="detail-row">
+                            <span class="detail-label">Created At</span>
+                            <span class="detail-value" id="modal-created-time">2026-08-27 15:30</span>
+                        </div>
+                        <div class="detail-row">
+                            <span class="detail-label">Resolved At</span>
+                            <span class="detail-value" id="modal-resolved-time">-</span>
+                        </div>
+                    </div>
+
+                    <!-- Workflow Transitions Panel -->
+                    <div class="action-panel" id="modal-transitions-panel">
+                        <h4>Transition Workflow</h4>
+                        <div class="workflow-actions" id="modal-workflow-buttons">
+                            <!-- Transition buttons populated dynamically -->
+                        </div>
+                    </div>
+
+                    <!-- Assignee Assignment Panel -->
+                    <div class="action-panel" id="modal-assignment-panel">
+                        <h4>Assign Owner</h4>
+                        <div class="assign-wrapper">
+                            <select id="modal-assignee-select" class="filter-select">
+                                <option value="">Unassigned</option>
+                                <!-- Populated dynamically -->
+                            </select>
+                            <button class="btn btn-secondary btn-icon" id="btn-save-assignment" title="Save Assignment">
+                                <i class="fa-solid fa-user-check"></i> Assign
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="/static/app.js"></script>
+</body>
+
+</html>

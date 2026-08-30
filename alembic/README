@@ -1,0 +1,13 @@
+Generic single-database configuration for BugFlow.
+
+This directory contains Alembic migration scripts for the BugFlow database schema.
+
+Usage:
+  - Create a new migration:   alembic revision --autogenerate -m "description"
+  - Apply migrations:         alembic upgrade head
+  - Rollback one migration:   alembic downgrade -1
+  - View migration history:   alembic history
+
+Configuration:
+  - Database URL is read from app.config.DATABASE_URL (env var DATABASE_URL)
+  - env.py loads the app's SQLAlchemy models (app.models.Base) for autogenerate support
