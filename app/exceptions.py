@@ -17,6 +17,10 @@ class DuplicateKey(BugFlowException):
     def __init__(self, message: str = "Duplicate key constraint violated"):
         super().__init__(message, status.HTTP_400_BAD_REQUEST)
 
+class BadRequest(BugFlowException):
+    def __init__(self, message: str = "Bad request"):
+        super().__init__(message, status.HTTP_400_BAD_REQUEST)
+
 class InvalidTransition(BugFlowException):
     def __init__(self, message: str = "Invalid status transition"):
         super().__init__(message, status.HTTP_400_BAD_REQUEST)

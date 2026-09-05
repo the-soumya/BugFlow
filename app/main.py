@@ -4,14 +4,14 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
 import os
 
-from app.routers import auth, project, issue
+from app.routers import auth, project, issue, triage, collaboration, sprint
 from app.exceptions import setup_exception_handlers
 
 from contextlib import asynccontextmanager
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    # Seed database at startup if empty
+    # Seed database at startup if needed
     from app.seed import seed_data
     try:
         seed_data()
@@ -21,12 +21,11 @@ async def lifespan(app: FastAPI):
 
 # Initialize FastAPI App
 app = FastAPI(
-    title="BugFlow - Issue Tracking & Resolution Platform",
-    description="Milestone 1 API and Dashboard Platform",
-    version="1.0.0",
+    title="BugFlow - Software Issue Tracking & Resolution Platform",
+    description="Layered Issue Tracking Platform: Core Foundation and Agile Workflow, Smart Triage & Team Collaboration Engine",
+    version="2.0.0",
     lifespan=lifespan
 )
-
 
 # Setup CORS middleware
 app.add_middleware(
@@ -40,18 +39,29 @@ app.add_middleware(
 # Register custom global exception handlers
 setup_exception_handlers(app)
 
-# Include routers
+# Layer 1: Core Platform Routers (Auth, Projects, Issues)
 app.include_router(auth.router)
 app.include_router(project.router)
 app.include_router(issue.router)
 
+# Layer 2: Agile Workflow & Collaboration Routers (Triage, Collaboration, Sprints)
+app.include_router(triage.router)
+app.include_router(collaboration.router)
+app.include_router(sprint.router)
+
 # Mount the static directory for the SPA frontend
-# We create it first to avoid any startup crashes
 static_dir = os.path.join(os.path.dirname(os.path.dirname(__file__)), "static")
 if not os.path.exists(static_dir):
     os.makedirs(static_dir)
 
 app.mount("/static", StaticFiles(directory=static_dir), name="static")
+
+# Mount uploads directory for screenshots and error logs
+uploads_dir = os.path.join(os.path.dirname(os.path.dirname(__file__)), "uploads")
+if not os.path.exists(uploads_dir):
+    os.makedirs(uploads_dir)
+
+app.mount("/uploads", StaticFiles(directory=uploads_dir), name="uploads")
 
 # Catch-all route to serve the SPA index.html
 @app.get("/")

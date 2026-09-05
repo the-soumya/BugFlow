@@ -11,6 +11,22 @@ from app.schemas.issue import (
 )
 from app.schemas.audit_log import AuditLogResponse
 from app.schemas.response import ApiResponse
+from app.schemas.triage import (
+    TriageRecommendationRequest,
+    DeveloperRecommendation,
+    TriageRecommendationResponse
+)
+from app.schemas.collaboration import (
+    CommentCreateRequest,
+    CommentResponse,
+    AttachmentResponse
+)
+from app.schemas.sprint import (
+    SprintCreateRequest,
+    SprintStatusUpdateRequest,
+    SprintResponse,
+    SprintSummaryResponse
+)
 
 __all__ = [
     "RegisterRequest",
@@ -27,6 +43,15 @@ __all__ = [
     "IssueResponse",
     "IssueSummaryResponse",
     "AuditLogResponse",
-    "ApiResponse"
+    "ApiResponse",
+    "TriageRecommendationRequest",
+    "DeveloperRecommendation",
+    "TriageRecommendationResponse",
+    "CommentCreateRequest",
+    "CommentResponse",
+    "AttachmentResponse",
+    "SprintCreateRequest",
+    "SprintStatusUpdateRequest",
+    "SprintResponse",
+    "SprintSummaryResponse"
 ]
-

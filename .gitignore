@@ -1,11 +1,27 @@
+# Virtual environment
 .venv/
+
+# Python cache
 __pycache__/
 *.pyc
 *.pyo
 *.pyd
+
+# Environment variables
 .env
+
+# Database files
 db.sqlite3
 *.db
 *.sqlite
+
+# IDE
 .idea/
 .vscode/
+
+# Uploads (user-generated content)
+uploads/
+
+# OS files
+.DS_Store
+Thumbs.db

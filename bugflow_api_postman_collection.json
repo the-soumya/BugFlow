@@ -1,8 +1,8 @@
 {
 	"info": {
 		"_postman_id": "c6a782b1-5e8a-4933-bf9f-0c6ad97bc751",
-		"name": "BugFlow Milestone 1 API",
-		"description": "Postman Collection for BugFlow Issue Tracking & Resolution Platform - Milestone 1 validation",
+		"name": "BugFlow Platform API",
+		"description": "Postman Collection for BugFlow Issue Tracking & Resolution Platform API",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
 	},
 	"item": [
@@ -55,39 +55,8 @@
 						],
 						"type": "text/javascript"
 					}
-				]
-			},
-			"request": {
-				"method": "POST",
-				"header": [
-					{
-						"key": "Content-Type",
-						"value": "application/json",
-						"type": "text"
-					}
-				],
-				"body": {
-					"mode": "raw",
-					"raw": "{\n  \"email\": \"admin@bugflow.com\",\n  \"password\": \"password123\"\n}"
-				},
-				"url": {
-					"raw": "http://127.0.0.1:8000/api/auth/login",
-					"protocol": "http",
-					"host": [
-						"127",
-						"0",
-						"0",
-						"1"
-					],
-					"port": "8000",
-					"path": [
-						"api",
-						"auth",
-						"login"
-					]
 				}
-			},
-			"response": []
+			]
 		},
 		{
 			"name": "Step 3: Register a DEVELOPER",
@@ -171,48 +140,8 @@
 						],
 						"type": "text/javascript"
 					}
-				]
-			},
-			"request": {
-				"auth": {
-					"type": "bearer",
-					"bearer": [
-						{
-							"key": "token",
-							"value": "{{bugflow_jwt_token}}",
-							"type": "string"
-						}
-					]
-				},
-				"method": "POST",
-				"header": [
-					{
-						"key": "Content-Type",
-						"value": "application/json",
-						"type": "text"
-					}
-				],
-				"body": {
-					"mode": "raw",
-					"raw": "{\n  \"name\": \"Mobile Reporter App\",\n  \"description\": \"Issue tracking platform native client\",\n  \"project_key\": \"BUG\"\n}"
-				},
-				"url": {
-					"raw": "http://127.0.0.1:8000/api/projects",
-					"protocol": "http",
-					"host": [
-						"127",
-						"0",
-						"0",
-						"1"
-					],
-					"port": "8000",
-					"path": [
-						"api",
-						"projects"
-					]
 				}
-			},
-			"response": []
+			]
 		},
 		{
 			"name": "Step 6: Create an Issue",
@@ -228,50 +157,8 @@
 						],
 						"type": "text/javascript"
 					}
-				]
-			},
-			"request": {
-				"auth": {
-					"type": "bearer",
-					"bearer": [
-						{
-							"key": "token",
-							"value": "{{bugflow_jwt_token}}",
-							"type": "string"
-						}
-					]
-				},
-				"method": "POST",
-				"header": [
-					{
-						"key": "Content-Type",
-						"value": "application/json",
-						"type": "text"
-					}
-				],
-				"body": {
-					"mode": "raw",
-					"raw": "{\n  \"title\": \"Login button is not working\",\n  \"description\": \"The login button does not respond after entering valid credentials.\",\n  \"issue_type\": \"BUG\",\n  \"priority\": \"HIGH\",\n  \"severity\": \"HIGH\"\n}"
-				},
-				"url": {
-					"raw": "http://127.0.0.1:8000/api/projects/{{bugflow_project_id}}/issues",
-					"protocol": "http",
-					"host": [
-						"127",
-						"0",
-						"0",
-						"1"
-					],
-					"port": "8000",
-					"path": [
-						"api",
-						"projects",
-						"{{bugflow_project_id}}",
-						"issues"
-					]
 				}
-			},
-			"response": []
+			]
 		},
 		{
 			"name": "Step 7: Assign the Issue to Developer",

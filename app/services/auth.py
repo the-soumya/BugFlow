@@ -29,5 +29,5 @@ def authenticate_user(db: Session, request: LoginRequest) -> str:
         raise Unauthorized("Invalid email or password")
 
     # Generate token payload
-    token = create_access_token(data={"sub": user.email, "role": user.role.value, "name": user.name})
+    token = create_access_token(data={"sub": user.email, "role": user.role.value, "name": user.name, "id": user.id})
     return token

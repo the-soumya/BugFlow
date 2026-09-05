@@ -23,17 +23,37 @@ def create_issue(db: Session, project_id: int, request: IssueCreateRequest, repo
         if not existing:
             break
 
+    # Calculate smart priority score
+    from app.services.triage import calculate_priority_score
+    category = request.category or "General"
+    triage_result = calculate_priority_score(
+        severity=request.severity.value if hasattr(request.severity, 'value') else str(request.severity),
+        category=category
+    )
+    score = triage_result["priority_score"]
+    recommended_prio = triage_result["recommended_priority"]
+
+    # Assign recommended priority if default MEDIUM was supplied or assign URGENT if score >= 10
+    final_priority = request.priority
+    if score >= 10:
+        final_priority = IssuePriority.URGENT
+    elif request.priority == IssuePriority.MEDIUM and recommended_prio in [p.value for p in IssuePriority]:
+        final_priority = IssuePriority(recommended_prio)
+
     issue = Issue(
         issue_key=key,
         title=request.title,
         description=request.description,
         issue_type=request.issue_type,
-        status=WorkflowState.OPEN,
-        priority=request.priority,
+        status=WorkflowState.REPORTED,
+        priority=final_priority,
         severity=request.severity,
+        category=category,
+        priority_score=score,
+        sprint_id=request.sprint_id,
         project_id=project_id,
         reporter_id=reporter.id,
-        assignee_id=None
+        assignee_id=request.assignee_id if hasattr(request, 'assignee_id') else None
     )
     db.add(issue)
     db.commit()
@@ -46,7 +66,7 @@ def create_issue(db: Session, project_id: int, request: IssueCreateRequest, repo
         action="ISSUE_CREATED",
         performed_by=reporter,
         old_value=None,
-        new_value=f"Created issue {key} with title '{request.title}'"
+        new_value=f"Created issue {key} with title '{request.title}' (Priority: {final_priority.value}, Score: {score})"
     )
 
     return issue
@@ -65,6 +85,7 @@ def get_project_issues(
     severity: Optional[IssueSeverity] = None,
     assignee_id: Optional[int] = None,
     issue_type: Optional[IssueType] = None,
+    reporter_id: Optional[int] = None,
     page: int = 0,
     size: int = 10
 ) -> Tuple[List[Issue], int]:
@@ -82,6 +103,8 @@ def get_project_issues(
         query = query.filter(Issue.severity == severity)
     if assignee_id:
         query = query.filter(Issue.assignee_id == assignee_id)
+    if reporter_id:
+        query = query.filter(Issue.reporter_id == reporter_id)
     if issue_type:
         query = query.filter(Issue.issue_type == issue_type)
 
@@ -119,6 +142,17 @@ def update_issue(db: Session, issue_id: int, request: IssueUpdateRequest, user: 
         changes.append(("severity", issue.severity.value, request.severity.value))
         issue.severity = request.severity
 
+    if request.category is not None and request.category != issue.category:
+        changes.append(("category", issue.category or "None", request.category))
+        issue.category = request.category
+
+    if request.severity is not None or request.category is not None:
+        from app.services.triage import calculate_priority_score
+        cat = issue.category or "General"
+        sev = issue.severity.value if hasattr(issue.severity, 'value') else str(issue.severity)
+        triage_res = calculate_priority_score(sev, cat)
+        issue.priority_score = triage_res["priority_score"]
+
     if changes:
         db.commit()
         db.refresh(issue)
@@ -151,9 +185,10 @@ def assign_issue(db: Session, issue_id: int, assignee_id: Optional[int], user: U
         issue.assignee_id = None
         new_assignee_name = "Unassigned"
 
+    db.commit()
+    db.refresh(issue)
+
     if old_assignee_name != new_assignee_name:
-        db.commit()
-        db.refresh(issue)
         log_action(
             db=db,
             issue_id=issue.id,
@@ -173,23 +208,23 @@ def update_issue_status(db: Session, issue_id: int, request: StatusUpdateRequest
     if old_status == new_status:
         return issue
 
-    # Validate state machine transitions
+    # Validate state machine transitions for Agile Linear Workflow:
+    # REPORTED -> TRIAGED -> IN_PROGRESS -> QA_VERIFICATION -> RESOLVED -> CLOSED
     valid_transitions = {
-        WorkflowState.OPEN: [WorkflowState.IN_PROGRESS],
-        WorkflowState.IN_PROGRESS: [WorkflowState.RESOLVED],
-        WorkflowState.RESOLVED: [WorkflowState.CLOSED, WorkflowState.REOPENED],
-        WorkflowState.CLOSED: [],
-        WorkflowState.REOPENED: [WorkflowState.IN_PROGRESS]
+        WorkflowState.REPORTED: [WorkflowState.TRIAGED, WorkflowState.IN_PROGRESS, WorkflowState.CLOSED],
+        WorkflowState.TRIAGED: [WorkflowState.IN_PROGRESS, WorkflowState.QA_VERIFICATION, WorkflowState.REPORTED, WorkflowState.CLOSED],
+        WorkflowState.OPEN: [WorkflowState.TRIAGED, WorkflowState.IN_PROGRESS, WorkflowState.CLOSED],
+        WorkflowState.IN_PROGRESS: [WorkflowState.QA_VERIFICATION, WorkflowState.RESOLVED, WorkflowState.TRIAGED],
+        WorkflowState.QA_VERIFICATION: [WorkflowState.RESOLVED, WorkflowState.IN_PROGRESS, WorkflowState.TRIAGED],
+        WorkflowState.RESOLVED: [WorkflowState.CLOSED, WorkflowState.REOPENED, WorkflowState.QA_VERIFICATION],
+        WorkflowState.CLOSED: [WorkflowState.REOPENED],
+        WorkflowState.REOPENED: [WorkflowState.TRIAGED, WorkflowState.IN_PROGRESS]
     }
     
     allowed = valid_transitions.get(old_status, [])
     
-    # We allow the transition if it is in the list, or if the user is ADMIN/PROJECT_MANAGER (as an override safety)
-    # Wait, the prompt says "Prevent obviously invalid transitions." 
-    # Let's enforce the transition rules strictly for all users unless we want general override. The prompt is:
-    # "Allow basic transitions such as: OPEN -> IN_PROGRESS, IN_PROGRESS -> RESOLVED, etc. Prevent obviously invalid transitions."
-    # So we strictly enforce it.
-    if new_status not in allowed:
+    # Allow transition if in allowed list, or allow ADMIN / PROJECT_MANAGER administrative override
+    if new_status not in allowed and user.role not in [UserRole.ADMIN, UserRole.PROJECT_MANAGER]:
         raise InvalidTransition(f"Cannot transition status from {old_status.value} to {new_status.value}")
         
     issue.status = new_status

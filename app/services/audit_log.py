@@ -25,3 +25,6 @@ def log_action(
 
 def get_issue_logs(db: Session, issue_id: int) -> List[AuditLog]:
     return db.query(AuditLog).filter(AuditLog.issue_id == issue_id).order_by(AuditLog.timestamp.desc()).all()
+
+def get_recent_logs(db: Session, limit: int = 50) -> List[AuditLog]:
+    return db.query(AuditLog).order_by(AuditLog.timestamp.desc()).limit(limit).all()
