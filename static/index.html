@@ -15,6 +15,8 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <!-- Chart.js CDN -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Plotly.js CDN for Milestone 3 Interactive Charts -->
+    <script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
     <link rel="stylesheet" href="/static/styles.css?v=3.0">
 </head>
 
@@ -137,6 +139,11 @@
                 </a>
                 <a href="#" class="nav-item" data-view="reports-view" id="nav-reports">
                     <i class="fa-solid fa-chart-line"></i> Reports
+                </a>
+
+                <div class="nav-section-label">QUALITY & METRICS</div>
+                <a href="#" class="nav-item" data-view="milestone3-view" id="nav-milestone3">
+                    <i class="fa-solid fa-chart-pie"></i> Analytics & APIs
                 </a>
             </nav>
 
@@ -949,6 +956,301 @@
 
             </div>
 
+            <!-- 8. MILESTONE 3: SOFTWARE QUALITY ANALYTICS, CI/CD WEBHOOK & REPORTING -->
+            <div id="milestone3-view" class="app-view">
+
+                <!-- TOP SERVICE BANNER -->
+                <div class="header-card m3-service-banner">
+                    <div class="header-details">
+                        <div class="bf-icon" style="background: linear-gradient(135deg, #10b981, #06b6d4);">
+                            <i class="fa-solid fa-chart-pie" style="font-size: 1.15rem; color: #ffffff;"></i>
+                        </div>
+                        <div class="header-title-wrapper">
+                            <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
+                                <h1>Analytics & APIs</h1>
+                                <span class="badge m3-status-badge m3-badge-pulse" id="m3-banner-notif-service">
+                                    <span class="status-dot-pulse"></span> Notification Service: Running
+                                </span>
+                                <span class="badge m3-status-badge m3-badge-security" id="m3-banner-security-status">
+                                    <i class="fa-solid fa-shield-check"></i> Security Status: CI/CD Sync Active
+                                </span>
+                            </div>
+                            <p>Automated Git Commit Webhooks, Quality Scorecard Metrics (MTTR & Leakage), Interactive Plotly Visualizations, and PDF/CSV Export</p>
+                        </div>
+                    </div>
+
+                    <div class="header-controls">
+                        <button class="btn btn-primary" id="btn-m3-export-pdf" title="Generate and Download PDF Quality Report">
+                            <i class="fa-solid fa-file-pdf"></i> Export PDF
+                        </button>
+                        <button class="btn btn-secondary" id="btn-m3-export-csv" title="Download Excel-Compatible Bug Registry CSV">
+                            <i class="fa-solid fa-file-csv"></i> Export CSV
+                        </button>
+                        <button class="btn btn-outline" id="btn-m3-refresh" title="Refresh Analytics Scorecard & Charts">
+                            <i class="fa-solid fa-rotate"></i> Refresh
+                        </button>
+                    </div>
+                </div>
+
+                <!-- 4 CORE QUALITY METRICS SCORECARD -->
+                <div class="metrics-row m3-metrics-grid">
+                    <!-- Metric 1: Fix Rate Percentage -->
+                    <div class="metric-card m3-metric-card" id="card-fix-rate">
+                        <div class="metric-card-header">
+                            <span class="metric-title">Fix Rate Percentage</span>
+                            <span class="m3-metric-icon"><i class="fa-solid fa-check-double text-resolved"></i></span>
+                        </div>
+                        <div class="metric-value color-resolved" id="m3-fix-rate">--%</div>
+                        <div class="m3-progress-bar-bg">
+                            <div class="m3-progress-bar-fill bg-resolved" id="m3-fix-rate-bar" style="width: 0%;"></div>
+                        </div>
+                        <div class="metric-subtitle" id="m3-fix-rate-sub">Resolved + Closed / Total Bugs</div>
+                        <span class="m3-benchmark-tag">Benchmark: &gt; 80%</span>
+                    </div>
+
+                    <!-- Metric 2: Mean Time to Resolution (MTTR) -->
+                    <div class="metric-card m3-metric-card" id="card-mttr">
+                        <div class="metric-card-header">
+                            <span class="metric-title">Mean Time to Resolution (MTTR)</span>
+                            <span class="m3-metric-icon"><i class="fa-solid fa-stopwatch text-progress"></i></span>
+                        </div>
+                        <div class="metric-value color-progress" id="m3-mttr">-- hrs</div>
+                        <div class="metric-subtitle" id="m3-mttr-sub">Average fix duration from report</div>
+                        <span class="m3-benchmark-tag">Benchmark: &lt; 48 hrs</span>
+                    </div>
+
+                    <!-- Metric 3: Defect Leakage Rate -->
+                    <div class="metric-card m3-metric-card" id="card-leakage">
+                        <div class="metric-card-header">
+                            <span class="metric-title">Defect Leakage Rate</span>
+                            <span class="m3-metric-icon"><i class="fa-solid fa-shield-virus text-warning"></i></span>
+                        </div>
+                        <div class="metric-value color-warning" id="m3-leakage">--%</div>
+                        <div class="metric-subtitle" id="m3-leakage-sub">Bugs found in Production / Total</div>
+                        <span class="m3-benchmark-tag">Benchmark: &lt; 15%</span>
+                    </div>
+
+                    <!-- Metric 4: Backlog Health Score -->
+                    <div class="metric-card m3-metric-card" id="card-health-score">
+                        <div class="metric-card-header">
+                            <span class="metric-title">Backlog Health Score</span>
+                            <span class="m3-metric-icon"><i class="fa-solid fa-heart-pulse text-critical"></i></span>
+                        </div>
+                        <div class="metric-value" id="m3-health-score">-- / 100</div>
+                        <div class="metric-subtitle" id="m3-health-verdict">Evaluating project readiness...</div>
+                        <span class="badge badge-high" id="m3-health-badge">ANALYZING</span>
+                    </div>
+                </div>
+
+                <!-- INTERACTIVE PLOTLY VISUALIZATIONS SECTION -->
+                <div class="m3-charts-container">
+                    <!-- Top Chart: 14-Day Defect Trends Line Chart -->
+                    <div class="card m3-chart-card">
+                        <div class="card-header" style="display: flex; justify-content: space-between; align-items: center;">
+                            <div>
+                                <h3 style="font-size: 1.05rem; font-weight: 700; color: #1e293b; margin: 0;">
+                                    <i class="fa-solid fa-chart-line text-primary"></i> 14-Day Defect Resolution Trend
+                                </h3>
+                                <p style="font-size: 0.8rem; color: #64748b; margin: 2px 0 0 0;">
+                                    <span style="color: #ef4444; font-weight: 600;">● Red Line</span>: New Reported Bugs | 
+                                    <span style="color: #10b981; font-weight: 600;">● Green Line</span>: Bugs Resolved
+                                </p>
+                            </div>
+                            <span class="badge badge-low"><i class="fa-solid fa-chart-simple"></i> Interactive Plotly.js</span>
+                        </div>
+                        <div class="card-body" style="padding: 10px 15px;">
+                            <div id="m3-plotly-trend" style="width: 100%; min-height: 350px;"></div>
+                        </div>
+                    </div>
+
+                    <!-- Bottom 2-Column Row: Donut and Pipeline Charts -->
+                    <div class="m3-charts-row-2col">
+                        <!-- Severity Donut Chart -->
+                        <div class="card m3-chart-card">
+                            <div class="card-header">
+                                <h3 style="font-size: 0.95rem; font-weight: 700; color: #f8fafc; margin: 0;">
+                                    <i class="fa-solid fa-chart-pie text-critical"></i> Defect Severity Distribution
+                                </h3>
+                                <p style="font-size: 0.75rem; color: #94a3b8; margin: 2px 0 0 0;">Proportion of Critical, Major, Minor, and Trivial bugs</p>
+                            </div>
+                            <div class="card-body" style="padding: 10px 15px;">
+                                <div id="m3-plotly-severity" style="width: 100%; min-height: 320px;"></div>
+                            </div>
+                        </div>
+
+                        <!-- Workflow Pipeline Bar Chart -->
+                        <div class="card m3-chart-card">
+                            <div class="card-header">
+                                <h3 style="font-size: 0.95rem; font-weight: 700; color: #f8fafc; margin: 0;">
+                                    <i class="fa-solid fa-bars-progress text-info"></i> Workflow Pipeline Stages
+                                </h3>
+                                <p style="font-size: 0.75rem; color: #94a3b8; margin: 2px 0 0 0;">Active bug volume across linear Agile states</p>
+                            </div>
+                            <div class="card-body" style="padding: 10px 15px;">
+                                <div id="m3-plotly-workflow" style="width: 100%; min-height: 320px;"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Bottom Chart: Mean Time to Resolution (MTTR) & Individual Defect TTR -->
+                    <div class="card m3-chart-card" style="margin-top: 15px;">
+                        <div class="card-header" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+                            <div>
+                                <h3 id="m3-mttr-card-title" style="font-size: 1.05rem; font-weight: 700; color: #f8fafc; margin: 0;">
+                                    <i class="fa-solid fa-stopwatch text-progress"></i> Mean Time to Resolution (MTTR) & SLA Performance
+                                </h3>
+                                <p id="m3-mttr-card-subtitle" style="font-size: 0.8rem; color: #94a3b8; margin: 2px 0 0 0;">
+                                    Average resolution hours vs engineering SLA benchmarks across priority tiers
+                                </p>
+                            </div>
+                            <div style="display: flex; gap: 8px; align-items: center;">
+                                <div class="btn-group" role="group" id="m3-mttr-tab-group" style="background: rgba(15, 23, 42, 0.7); padding: 3px; border-radius: 8px; border: 1px solid rgba(255, 255, 255, 0.1);">
+                                    <button type="button" class="btn btn-sm btn-primary active" id="btn-mttr-view-priority" style="font-size: 0.75rem; padding: 5px 12px; border-radius: 6px; font-weight: 600;">
+                                        <i class="fa-solid fa-chart-column"></i> Priority MTTR vs SLA
+                                    </button>
+                                    <button type="button" class="btn btn-sm btn-secondary" id="btn-mttr-view-ttr" style="font-size: 0.75rem; padding: 5px 12px; border-radius: 6px; font-weight: 600;">
+                                        <i class="fa-solid fa-timeline"></i> Defect TTR Timeline
+                                    </button>
+                                </div>
+                                <span class="badge badge-low" id="m3-mttr-chart-badge"><i class="fa-solid fa-clock-rotate-left"></i> MTTR Analytics</span>
+                            </div>
+                        </div>
+                        <div class="card-body" style="padding: 10px 15px;">
+                            <div id="m3-plotly-mttr" style="width: 100%; min-height: 350px;"></div>
+                            <div id="m3-plotly-ttr" style="width: 100%; min-height: 350px; display: none;"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 2-COLUMN BOTTOM ROW: WEBHOOK SIMULATOR + LIVE REST API EXPLORER -->
+                <div class="m3-interactive-row">
+
+                    <!-- COLUMN 1: AUTOMATED CI/CD GIT WEBHOOK SIMULATOR -->
+                    <div class="card m3-action-card">
+                        <div class="card-header" style="background: linear-gradient(135deg, #1e293b, #0f172a); color: white; border-radius: 12px 12px 0 0;">
+                            <div style="display: flex; align-items: center; justify-content: space-between;">
+                                <div>
+                                    <h3 style="margin: 0; color: #f8fafc; font-size: 1rem;">
+                                        <i class="fa-solid fa-robot text-warning"></i> Automated CI/CD Git Webhook Bot
+                                    </h3>
+                                    <p style="margin: 2px 0 0 0; color: #94a3b8; font-size: 0.78rem;">
+                                        POST <code>/api/v1/webhooks/git</code> auto-advances bug tickets to QA_VERIFICATION
+                                    </p>
+                                </div>
+                                <span class="badge" style="background: rgba(234, 179, 8, 0.2); color: #facc15; border: 1px solid rgba(234, 179, 8, 0.4);">
+                                    <i class="fa-solid fa-bolt"></i> Live Bot
+                                </span>
+                            </div>
+                        </div>
+                        <div class="card-body">
+                            <p style="font-size: 0.85rem; color: #475569; margin-bottom: 15px;">
+                                When a programmer commits code with a message like <em>"fixes #2 login password crash"</em>, BugFlow extracts the bug ID and auto-advances it to <strong>QA_VERIFICATION</strong> with an audit log trail.
+                            </p>
+
+                            <div class="form-group" style="margin-bottom: 12px;">
+                                <label for="m3-commit-message" style="font-weight: 600; font-size: 0.85rem;">Git Commit Message</label>
+                                <input type="text" id="m3-commit-message" class="form-control" 
+                                       value="Merge PR #45: fixes #2 login password crash" 
+                                       placeholder="e.g. fixes #2 login password crash">
+                            </div>
+
+                            <div class="form-row-2col" style="margin-bottom: 12px;">
+                                <div class="form-group" style="margin-bottom: 0;">
+                                    <label for="m3-commit-sha" style="font-weight: 600; font-size: 0.85rem;">Commit Hash / SHA</label>
+                                    <input type="text" id="m3-commit-sha" class="form-control" value="a7f8c92" placeholder="a7f8c92">
+                                </div>
+                                <div class="form-group" style="margin-bottom: 0;">
+                                    <label style="font-weight: 600; font-size: 0.85rem;">Quick Presets</label>
+                                    <div style="display: flex; gap: 6px;">
+                                        <button type="button" class="btn btn-secondary btn-sm" id="btn-preset-fixes2" title="Preset fixes #2">fixes #2</button>
+                                        <button type="button" class="btn btn-secondary btn-sm" id="btn-preset-closes1" title="Preset closes #1">closes #1</button>
+                                        <button type="button" class="btn btn-secondary btn-sm" id="btn-preset-resolves3" title="Preset resolves #3">resolves #3</button>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <button type="button" class="btn btn-warning btn-block" id="btn-simulate-webhook" style="font-weight: 700; padding: 12px; margin-top: 10px;">
+                                <i class="fa-solid fa-code-branch"></i> Simulate Git Commit (fixes #2)
+                            </button>
+
+                            <!-- Webhook Execution Console / Result -->
+                            <div class="m3-console-box" id="m3-webhook-console" style="margin-top: 15px; display: none;">
+                                <div class="m3-console-header">
+                                    <span><i class="fa-solid fa-terminal"></i> Webhook Bot Execution Log</span>
+                                    <span class="badge badge-low" id="m3-webhook-status-badge">200 OK</span>
+                                </div>
+                                <pre class="m3-console-output" id="m3-webhook-output">// Simulation output will appear here</pre>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- COLUMN 2: LIVE REST API EXPLORER & TESTER -->
+                    <div class="card m3-action-card">
+                        <div class="card-header" style="background: linear-gradient(135deg, #1e293b, #0f172a); color: white; border-radius: 12px 12px 0 0;">
+                            <div style="display: flex; align-items: center; justify-content: space-between;">
+                                <div>
+                                    <h3 style="margin: 0; color: #f8fafc; font-size: 1rem;">
+                                        <i class="fa-solid fa-satellite-dish text-primary"></i> Live REST API Explorer
+                                    </h3>
+                                    <p style="margin: 2px 0 0 0; color: #94a3b8; font-size: 0.78rem;">
+                                        Click "Send" on any endpoint to inspect real-time JSON responses directly on screen
+                                    </p>
+                                </div>
+                                <span class="badge" style="background: rgba(99, 102, 241, 0.2); color: #818cf8; border: 1px solid rgba(99, 102, 241, 0.4);">
+                                    <i class="fa-solid fa-play"></i> Interactive
+                                </span>
+                            </div>
+                        </div>
+                        <div class="card-body">
+                            <!-- Preset Endpoint Selector -->
+                            <div class="form-group" style="margin-bottom: 12px;">
+                                <label for="m3-api-preset-select" style="font-weight: 600; font-size: 0.85rem;">Select Endpoint to Test</label>
+                                <select id="m3-api-preset-select" class="form-control">
+                                    <option value="GET|/api/v1/issues/">GET /api/v1/issues/ (All Bug Records)</option>
+                                    <option value="GET|/api/v1/analytics/quality-metrics">GET /api/v1/analytics/quality-metrics (MTTR & Quality Math)</option>
+                                    <option value="GET|/api/v1/analytics/defect-trends">GET /api/v1/analytics/defect-trends (14-Day Bug Trend Data)</option>
+                                    <option value="GET|/api/v1/analytics/plotly-charts">GET /api/v1/analytics/plotly-charts (Plotly Configs JSON)</option>
+                                    <option value="POST|/api/v1/webhooks/git">POST /api/v1/webhooks/git (Git CI/CD Webhook)</option>
+                                    <option value="GET|/api/v1/export/pdf">GET /api/v1/export/pdf (Download PDF Quality Report)</option>
+                                    <option value="GET|/api/v1/export/csv">GET /api/v1/export/csv (Download Bug Registry CSV)</option>
+                                </select>
+                            </div>
+
+                            <!-- URL Bar & Send Button -->
+                            <div class="m3-api-url-bar">
+                                <span class="m3-api-method-badge" id="m3-api-method-label">GET</span>
+                                <input type="text" id="m3-api-url-input" class="form-control" value="/api/v1/issues/" style="font-family: monospace; font-size: 0.85rem;">
+                                <button type="button" class="btn btn-primary" id="btn-m3-api-send" style="white-space: nowrap; font-weight: 600;">
+                                    <i class="fa-solid fa-paper-plane"></i> Send
+                                </button>
+                            </div>
+
+                            <!-- Request Body (For POST requests) -->
+                            <div id="m3-api-body-wrapper" style="display: none; margin-top: 10px;">
+                                <label for="m3-api-body-input" style="font-weight: 600; font-size: 0.8rem;">JSON Request Body</label>
+                                <textarea id="m3-api-body-input" rows="3" class="form-control" style="font-family: monospace; font-size: 0.8rem;">{"commit_message": "fixes #2 login password crash", "commit_hash": "a7f8c92"}</textarea>
+                            </div>
+
+                            <!-- Response Box -->
+                            <div class="m3-console-box" style="margin-top: 14px;">
+                                <div class="m3-console-header">
+                                    <div style="display: flex; gap: 8px; align-items: center;">
+                                        <span id="m3-api-res-status" class="badge badge-low">200 OK</span>
+                                        <span id="m3-api-res-time" style="font-size: 0.75rem; color: #94a3b8;">-- ms</span>
+                                    </div>
+                                    <button type="button" class="btn btn-sm btn-secondary" id="btn-copy-api-res" style="padding: 3px 8px; font-size: 0.75rem;">
+                                        <i class="fa-solid fa-copy"></i> Copy JSON
+                                    </button>
+                                </div>
+                                <pre class="m3-console-output" id="m3-api-response-viewer">// Click 'Send' above to view live JSON response from the BugFlow server...</pre>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+
+            </div>
+
         </main>
     </div>
 
@@ -1276,7 +1578,7 @@
         </div>
     </div>
 
-    <script src="/static/app.js?v=3.3"></script>
+    <script src="/static/app.js?v=3.4"></script>
 </body>
 
 </html>

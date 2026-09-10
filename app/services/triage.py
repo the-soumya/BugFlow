@@ -153,31 +153,39 @@ def recommend_developers(db: Session, title: str, description: str, limit: int =
         user_skills_str = (user.skills or "").lower()
         user_skills_list = [s.strip() for s in user_skills_str.split(",") if s.strip()]
         
-        # Calculate skill score
-        skill_hits = 0
+        # Calculate skill score: direct text match vs domain keyword match
+        direct_hits = 0
+        domain_hits = 0
         matching_skill_names = []
         for s in user_skills_list:
-            # Check if skill matches any detected keywords or full text tokens
-            if s in full_text or any(token in s for token in tokens if len(token) > 2):
-                skill_hits += 1
+            if s in full_text:
+                direct_hits += 1
+                matching_skill_names.append(s.title())
+            elif any(token == s or (len(token) > 3 and token in s) for token in tokens):
+                direct_hits += 1
                 matching_skill_names.append(s.title())
             elif any(s in kw_list for domain in detected_domains for kw_list in [KEYWORD_DOMAINS[domain]]):
-                skill_hits += 1
+                domain_hits += 1
                 matching_skill_names.append(s.title())
                 
+        skill_hits = direct_hits + domain_hits
         # Primary base match percentage
-        if skill_hits > 0:
-            # High relevant match
-            base_percentage = 70 + min(skill_hits * 12, 25)
+        total_score = (direct_hits * 12) + (domain_hits * 3)
+        if total_score > 0:
+            base_percentage = 70 + min(total_score, 25)
         elif any(d in user_skills_str for d in detected_domains):
             base_percentage = 65
         else:
             # General fallback match
             base_percentage = 45 if user.role == UserRole.DEVELOPER else 35
 
+        # Prefer primary developers over QA for technical resolution
+        if user.role == UserRole.DEVELOPER:
+            base_percentage += 10
+
         # Workload deduction: don't give 10 bugs to one person if someone else is free!
-        # -4% per active bug, capped at -30%
-        workload_penalty = min(workload * 4, 30)
+        # -3% per active bug, capped at -20%
+        workload_penalty = min(workload * 3, 20)
         final_percentage = max(15, min(98, base_percentage - workload_penalty))
         
         # Build human-friendly rationale string
@@ -199,10 +207,11 @@ def recommend_developers(db: Session, title: str, description: str, limit: int =
             "match_percentage": int(final_percentage),
             "active_tasks": workload,
             "rationale": rationale,
-            "skill_hits": skill_hits
+            "skill_hits": skill_hits,
+            "direct_hits": direct_hits
         })
 
-    # Sort descending by match percentage, then ascending by workload
-    scored_devs.sort(key=lambda x: (x["match_percentage"], -x["active_tasks"]), reverse=True)
+    # Sort descending by match percentage, then direct hits, then ascending by workload
+    scored_devs.sort(key=lambda x: (x["match_percentage"], x["direct_hits"], -x["active_tasks"]), reverse=True)
     
     return scored_devs[:limit]

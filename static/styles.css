@@ -2869,4 +2869,226 @@ h1, h2, h3, h4, h5 {
     margin-bottom: 6px;
 }
 
+/* ==========================================================================
+   MILESTONE 3: ANALYTICS, SCORECARD, PLOTLY CHARTS & CI/CD WEBHOOK STYLING
+   ========================================================================== */
+
+.m3-service-banner {
+    background: linear-gradient(135deg, rgba(30, 41, 59, 0.85), rgba(15, 23, 42, 0.95));
+    border: 1px solid rgba(16, 185, 129, 0.25);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+}
+
+.m3-status-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.78rem;
+    font-weight: 600;
+    padding: 4px 10px;
+    border-radius: 20px;
+}
+
+.m3-badge-pulse {
+    background: rgba(16, 185, 129, 0.15);
+    color: #34d399;
+    border: 1px solid rgba(16, 185, 129, 0.35);
+}
+
+.status-dot-pulse {
+    width: 8px;
+    height: 8px;
+    background-color: #10b981;
+    border-radius: 50%;
+    display: inline-block;
+    box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7);
+    animation: statusPulse 1.8s infinite;
+}
+
+@keyframes statusPulse {
+    0% {
+        transform: scale(0.95);
+        box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7);
+    }
+    70% {
+        transform: scale(1);
+        box-shadow: 0 0 0 6px rgba(16, 185, 129, 0);
+    }
+    100% {
+        transform: scale(0.95);
+        box-shadow: 0 0 0 0 rgba(16, 185, 129, 0);
+    }
+}
+
+.m3-badge-security {
+    background: rgba(6, 182, 212, 0.15);
+    color: #22d3ee;
+    border: 1px solid rgba(6, 182, 212, 0.35);
+}
+
+.m3-metrics-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 16px;
+    margin-bottom: 24px;
+}
+
+.m3-metric-card {
+    position: relative;
+    background: linear-gradient(145deg, rgba(30, 41, 59, 0.7), rgba(15, 23, 42, 0.8));
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    padding: 18px 20px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    transition: transform 0.2s ease, border-color 0.2s ease;
+}
+
+.m3-metric-card:hover {
+    transform: translateY(-2px);
+    border-color: rgba(99, 102, 241, 0.4);
+}
+
+.metric-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 6px;
+}
+
+.m3-metric-icon {
+    font-size: 1.15rem;
+    opacity: 0.85;
+}
+
+.m3-progress-bar-bg {
+    width: 100%;
+    height: 6px;
+    background: rgba(255, 255, 255, 0.08);
+    border-radius: 6px;
+    margin: 8px 0;
+    overflow: hidden;
+}
+
+.m3-progress-bar-fill {
+    height: 100%;
+    border-radius: 6px;
+    transition: width 0.6s ease;
+}
+
+.m3-benchmark-tag {
+    align-self: flex-start;
+    font-size: 0.72rem;
+    color: #94a3b8;
+    background: rgba(255, 255, 255, 0.05);
+    padding: 2px 8px;
+    border-radius: 6px;
+    margin-top: 8px;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+/* Plotly Charts Layout */
+.m3-charts-container {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    margin-bottom: 24px;
+}
+
+.m3-chart-card {
+    background: var(--bg-panel-solid);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 4px 24px rgba(0, 0, 0, 0.25);
+}
+
+.m3-charts-row-2col {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+}
+
+@media (max-width: 900px) {
+    .m3-charts-row-2col {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* 2-Column Bottom Section (Webhook + API Explorer) */
+.m3-interactive-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+    margin-bottom: 30px;
+}
+
+@media (max-width: 1024px) {
+    .m3-interactive-row {
+        grid-template-columns: 1fr;
+    }
+}
+
+.m3-action-card {
+    background: var(--bg-panel-solid);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 4px 24px rgba(0, 0, 0, 0.25);
+}
+
+.m3-api-url-bar {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    background: rgba(15, 23, 42, 0.6);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    padding: 6px 10px;
+}
+
+.m3-api-method-badge {
+    background: #2563eb;
+    color: #ffffff;
+    font-weight: 700;
+    font-size: 0.75rem;
+    padding: 4px 8px;
+    border-radius: 4px;
+    letter-spacing: 0.5px;
+}
+
+.m3-console-box {
+    background: #090d16;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.m3-console-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: rgba(15, 23, 42, 0.9);
+    padding: 8px 14px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    font-size: 0.8rem;
+    color: #94a3b8;
+}
+
+.m3-console-output {
+    margin: 0;
+    padding: 12px 14px;
+    font-family: 'Consolas', 'Courier New', monospace;
+    font-size: 0.82rem;
+    line-height: 1.5;
+    color: #38bdf8;
+    background: transparent;
+    max-height: 250px;
+    overflow-y: auto;
+    white-space: pre-wrap;
+    word-break: break-word;
+}
+
 

@@ -3,6 +3,7 @@ from typing import Optional, List
 from fastapi import Depends
 from fastapi.security import OAuth2PasswordBearer
 from jose import JWTError, jwt
+# pyrefly: ignore [missing-import]
 from passlib.context import CryptContext
 from sqlalchemy.orm import Session
 from app.config import JWT_SECRET, JWT_ALGORITHM, ACCESS_TOKEN_EXPIRE_MINUTES

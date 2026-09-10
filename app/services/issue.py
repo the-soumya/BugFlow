@@ -1,6 +1,7 @@
+from app.models.user import UserRole
 from sqlalchemy.orm import Session
 from sqlalchemy.sql import func
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import List, Optional, Tuple, Dict
 from app.models.issue import Issue, IssueType, WorkflowState, IssuePriority, IssueSeverity
 from app.models.project import Project
@@ -231,7 +232,7 @@ def update_issue_status(db: Session, issue_id: int, request: StatusUpdateRequest
     
     # Set resolved_at timestamp on entering resolved or closed states
     if new_status in [WorkflowState.RESOLVED, WorkflowState.CLOSED]:
-        issue.resolved_at = datetime.utcnow()
+        issue.resolved_at = datetime.now(timezone.utc)
     else:
         issue.resolved_at = None
         

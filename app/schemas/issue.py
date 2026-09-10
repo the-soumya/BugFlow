@@ -47,6 +47,8 @@ class IssueResponse(BaseModel):
     created_at: datetime
     updated_at: datetime
     resolved_at: Optional[datetime]
+    resolution_time_hours: Optional[float] = None
+    resolution_time_formatted: Optional[str] = None
     
     # Embedded user details
     reporter: Optional[UserMinResponse] = None

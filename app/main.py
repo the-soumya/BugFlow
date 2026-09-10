@@ -4,7 +4,7 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
 import os
 
-from app.routers import auth, project, issue, triage, collaboration, sprint
+from app.routers import auth, project, issue, triage, collaboration, sprint, webhook, analytics, export
 from app.exceptions import setup_exception_handlers
 
 from contextlib import asynccontextmanager
@@ -22,8 +22,8 @@ async def lifespan(app: FastAPI):
 # Initialize FastAPI App
 app = FastAPI(
     title="BugFlow - Software Issue Tracking & Resolution Platform",
-    description="Layered Issue Tracking Platform: Core Foundation and Agile Workflow, Smart Triage & Team Collaboration Engine",
-    version="2.0.0",
+    description="Layered Issue Tracking Platform: Core Foundation, Agile Workflow, Quality Metrics & Automated CI/CD Webhooks",
+    version="3.0.0",
     lifespan=lifespan
 )
 
@@ -48,6 +48,11 @@ app.include_router(issue.router)
 app.include_router(triage.router)
 app.include_router(collaboration.router)
 app.include_router(sprint.router)
+
+# Layer 3: Analytics, Automated CI/CD Webhooks & Export Routers
+app.include_router(webhook.router)
+app.include_router(analytics.router)
+app.include_router(export.router)
 
 # Mount the static directory for the SPA frontend
 static_dir = os.path.join(os.path.dirname(os.path.dirname(__file__)), "static")

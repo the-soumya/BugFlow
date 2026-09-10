@@ -96,6 +96,10 @@ def get_project_issues(
     "/api/issues",
     response_model=ApiResponse[dict]
 )
+@router.get(
+    "/api/v1/issues",
+    response_model=ApiResponse[dict]
+)
 def list_all_issues(
     projectId: Optional[int] = Query(None),
     project_id: Optional[int] = Query(None),
@@ -155,6 +159,10 @@ def list_all_issues(
 
 @router.get(
     "/api/issues/{id}",
+    response_model=ApiResponse[IssueResponse]
+)
+@router.get(
+    "/api/v1/issues/{id}",
     response_model=ApiResponse[IssueResponse]
 )
 def get_issue_by_id(

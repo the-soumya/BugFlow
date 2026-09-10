@@ -66,3 +66,35 @@ class Issue(Base):
     sprint = relationship("Sprint", back_populates="issues")
     comments = relationship("Comment", back_populates="issue", cascade="all, delete-orphan")
     attachments = relationship("Attachment", back_populates="issue", cascade="all, delete-orphan")
+
+    @property
+    def resolution_time_hours(self):
+        if self.status in [WorkflowState.RESOLVED, WorkflowState.CLOSED]:
+            res_time = self.resolved_at or self.updated_at
+            if res_time and self.created_at:
+                c_at = self.created_at
+                r_at = res_time
+                if c_at.tzinfo is None and r_at.tzinfo is not None:
+                    c_at = c_at.replace(tzinfo=r_at.tzinfo)
+                elif r_at.tzinfo is None and c_at.tzinfo is not None:
+                    r_at = r_at.replace(tzinfo=c_at.tzinfo)
+                diff = (r_at - c_at).total_seconds() / 3600.0
+                # If negative due to UTC vs IST (+5.5h) offset, adjust
+                if diff < 0:
+                    if diff + 5.5 >= 0:
+                        diff = diff + 5.5
+                    else:
+                        diff = abs(diff)
+                return round(max(0.0, diff), 2)
+        return None
+
+    @property
+    def resolution_time_formatted(self):
+        hrs = self.resolution_time_hours
+        if hrs is not None:
+            if hrs >= 24.0:
+                days = round(hrs / 24.0, 1)
+                return f"{days} days ({round(hrs, 1)} hrs)"
+            return f"{round(hrs, 1)} hrs"
+        return None
+

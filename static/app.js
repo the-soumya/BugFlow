@@ -473,10 +473,75 @@ function setupEventListeners() {
     if (btnSaveEdit) btnSaveEdit.addEventListener("click", handleSaveIssueEdit);
 
     // Project Select in Reports
-    document.getElementById("reports-project-select").addEventListener("change", (e) => {
-        const pId = parseInt(e.target.value);
-        loadReportsView(pId);
-    });
+    const repSelect = document.getElementById("reports-project-select");
+    if (repSelect) {
+        repSelect.addEventListener("change", (e) => {
+            const pId = parseInt(e.target.value);
+            loadReportsView(pId);
+        });
+    }
+
+    // Milestone 3 Event Handlers
+    const btnM3Pdf = document.getElementById("btn-m3-export-pdf");
+    if (btnM3Pdf) btnM3Pdf.addEventListener("click", exportPdfReport);
+
+    const btnM3Csv = document.getElementById("btn-m3-export-csv");
+    if (btnM3Csv) btnM3Csv.addEventListener("click", exportCsvReport);
+
+    const btnM3Refresh = document.getElementById("btn-m3-refresh");
+    if (btnM3Refresh) btnM3Refresh.addEventListener("click", loadMilestone3Dashboard);
+
+    const btnSimWebhook = document.getElementById("btn-simulate-webhook");
+    if (btnSimWebhook) btnSimWebhook.addEventListener("click", simulateGitWebhook);
+
+    const btnP2 = document.getElementById("btn-preset-fixes2");
+    if (btnP2) {
+        btnP2.addEventListener("click", () => {
+            const msgInput = document.getElementById("m3-commit-message");
+            if (msgInput) msgInput.value = "Merge PR #45: fixes #2 login password crash";
+        });
+    }
+
+    const btnP1 = document.getElementById("btn-preset-closes1");
+    if (btnP1) {
+        btnP1.addEventListener("click", () => {
+            const msgInput = document.getElementById("m3-commit-message");
+            if (msgInput) msgInput.value = "closes #1 sidebar overflow on laptops";
+        });
+    }
+
+    const btnP3 = document.getElementById("btn-preset-resolves3");
+    if (btnP3) {
+        btnP3.addEventListener("click", () => {
+            const msgInput = document.getElementById("m3-commit-message");
+            if (msgInput) msgInput.value = "resolves #3 postgresql pool exhaustion under load";
+        });
+    }
+
+    const apiPresetSel = document.getElementById("m3-api-preset-select");
+    if (apiPresetSel) apiPresetSel.addEventListener("change", handleApiPresetChange);
+
+    const btnMttrPri = document.getElementById("btn-mttr-view-priority");
+    const btnMttrTtr = document.getElementById("btn-mttr-view-ttr");
+    if (btnMttrPri && btnMttrTtr) {
+        btnMttrPri.addEventListener("click", () => switchMttrView("priority"));
+        btnMttrTtr.addEventListener("click", () => switchMttrView("ttr"));
+    }
+
+    const btnApiSend = document.getElementById("btn-m3-api-send");
+    if (btnApiSend) btnApiSend.addEventListener("click", executeApiExplorerRequest);
+
+    const btnCopyApi = document.getElementById("btn-copy-api-res");
+    if (btnCopyApi) {
+        btnCopyApi.addEventListener("click", () => {
+            const viewer = document.getElementById("m3-api-response-viewer");
+            if (viewer) {
+                navigator.clipboard.writeText(viewer.innerText)
+                    .then(() => alert("API response JSON copied to clipboard!"))
+                    .catch(err => console.error("Could not copy text: ", err));
+            }
+        });
+    }
 }
 
 // ================= AUTHENTICATION ACTIONS =================
@@ -616,7 +681,8 @@ function switchView(viewId) {
         "agile-workspace-view": "Sprints & Workflow",
         "projects-view": "Projects",
         "team-view": "Team",
-        "reports-view": "Reports"
+        "reports-view": "Reports",
+        "milestone3-view": "Analytics & APIs"
     };
     const topTitle = document.getElementById("top-navbar-title");
     if (topTitle && titleMap[viewId]) {
@@ -668,6 +734,8 @@ function switchView(viewId) {
         renderTeamList();
     } else if (viewId === "agile-workspace-view") {
         loadAgileWorkspaceView();
+    } else if (viewId === "milestone3-view") {
+        loadMilestone3Dashboard();
     }
 }
 
@@ -2816,4 +2884,427 @@ function handleGeneratePdfReport() {
     `;
 
     document.getElementById("pdf-report-modal").style.display = "flex";
+}
+
+// ==========================================================================
+// MILESTONE 3: ANALYTICS, PLOTLY VISUALIZATIONS, WEBHOOK BOT & API EXPLORER
+// ==========================================================================
+
+async function loadMilestone3Dashboard() {
+    try {
+        console.log("Loading Milestone 3 Quality Analytics & Charts...");
+
+        // 1. Fetch Quality Metrics Scorecard
+        const metricsRes = await fetch("/api/v1/analytics/quality-metrics");
+        if (metricsRes.ok) {
+            const metricsJson = await metricsRes.json();
+            if (metricsJson.success && metricsJson.data) {
+                const m = metricsJson.data;
+
+                // Fix Rate %
+                const elFixRate = document.getElementById("m3-fix-rate");
+                const elFixBar = document.getElementById("m3-fix-rate-bar");
+                const elFixSub = document.getElementById("m3-fix-rate-sub");
+                if (elFixRate) elFixRate.innerText = `${m.fix_rate_percentage}%`;
+                if (elFixBar) elFixBar.style.width = `${Math.min(100, m.fix_rate_percentage)}%`;
+                if (elFixSub) elFixSub.innerText = `${m.resolved_bugs + m.closed_bugs} Fixed / ${m.total_bugs} Total Bugs`;
+
+                // MTTR
+                const elMttr = document.getElementById("m3-mttr");
+                const elMttrSub = document.getElementById("m3-mttr-sub");
+                if (elMttr) elMttr.innerText = m.mttr_formatted || `${m.mean_time_to_resolution_hours} hrs`;
+                if (elMttrSub) {
+                    const slaText = m.mttr_sla_compliance_rate !== undefined ? ` • SLA Met: ${m.mttr_sla_compliance_rate}%` : '';
+                    elMttrSub.innerText = `Average resolution: ${m.mean_time_to_resolution_hours} hrs${slaText}`;
+                }
+
+                // Defect Leakage Rate %
+                const elLeak = document.getElementById("m3-leakage");
+                const elLeakSub = document.getElementById("m3-leakage-sub");
+                if (elLeak) elLeak.innerText = `${m.defect_leakage_rate_percentage}%`;
+                if (elLeakSub) elLeakSub.innerText = `${m.production_bugs} Found in Prod / ${m.total_bugs} Total`;
+
+                // Backlog Health Score
+                const elHealth = document.getElementById("m3-health-score");
+                const elHealthBadge = document.getElementById("m3-health-badge");
+                const elHealthVerdict = document.getElementById("m3-health-verdict");
+                if (elHealth) elHealth.innerText = `${m.backlog_health_score} / 100`;
+                if (elHealthVerdict) elHealthVerdict.innerText = m.health_verdict || "Release readiness evaluated";
+                if (elHealthBadge) {
+                    elHealthBadge.innerText = m.health_status || "HEALTHY";
+                    elHealthBadge.className = `badge ${m.backlog_health_score >= 85 ? 'badge-low' : (m.backlog_health_score >= 60 ? 'badge-med' : 'badge-crit')}`;
+                }
+            }
+        }
+
+        // 2. Fetch Plotly Charts Configuration
+        const chartsRes = await fetch("/api/v1/analytics/plotly-charts");
+        if (chartsRes.ok) {
+            const chartsJson = await chartsRes.json();
+            if (chartsJson.success && chartsJson.data) {
+                renderMilestone3PlotlyCharts(chartsJson.data);
+            }
+        }
+    } catch (err) {
+        console.error("Failed to load Milestone 3 dashboard data:", err);
+    }
+}
+
+function renderMilestone3PlotlyCharts(chartsData) {
+    if (typeof Plotly === "undefined") {
+        console.warn("Plotly.js library not loaded yet.");
+        return;
+    }
+
+    // Common dark theme layout overrides for seamless aesthetic integration
+    const darkLayoutBase = {
+        paper_bgcolor: 'rgba(0, 0, 0, 0)',
+        plot_bgcolor: 'rgba(0, 0, 0, 0)',
+        font: {
+            family: 'Inter, Outfit, sans-serif',
+            color: '#94a3b8'
+        }
+    };
+
+    // 1. Defect Trend (Last 14 Days)
+    if (chartsData.trend_chart && document.getElementById("m3-plotly-trend")) {
+        const trendLayout = {
+            ...chartsData.trend_chart.layout,
+            ...darkLayoutBase,
+            xaxis: {
+                ...chartsData.trend_chart.layout.xaxis,
+                gridcolor: 'rgba(255, 255, 255, 0.06)',
+                zerolinecolor: 'rgba(255, 255, 255, 0.1)',
+                tickfont: { color: '#94a3b8' }
+            },
+            yaxis: {
+                ...chartsData.trend_chart.layout.yaxis,
+                gridcolor: 'rgba(255, 255, 255, 0.06)',
+                zerolinecolor: 'rgba(255, 255, 255, 0.1)',
+                tickfont: { color: '#94a3b8' }
+            },
+            legend: {
+                font: { color: '#f8fafc' },
+                orientation: 'h',
+                y: 1.15,
+                x: 0.5,
+                xanchor: 'center'
+            }
+        };
+        Plotly.newPlot("m3-plotly-trend", chartsData.trend_chart.data, trendLayout, {
+            responsive: true,
+            displayModeBar: false
+        });
+    }
+
+    // 2. Severity Donut Chart
+    if (chartsData.severity_chart && document.getElementById("m3-plotly-severity")) {
+        const severityLayout = {
+            ...chartsData.severity_chart.layout,
+            ...darkLayoutBase,
+            legend: {
+                font: { color: '#f8fafc' },
+                orientation: 'h',
+                y: -0.15,
+                x: 0.5,
+                xanchor: 'center'
+            }
+        };
+        Plotly.newPlot("m3-plotly-severity", chartsData.severity_chart.data, severityLayout, {
+            responsive: true,
+            displayModeBar: false
+        });
+    }
+
+    // 3. Workflow Pipeline Bar Chart
+    if (chartsData.workflow_chart && document.getElementById("m3-plotly-workflow")) {
+        const workflowLayout = {
+            ...chartsData.workflow_chart.layout,
+            ...darkLayoutBase,
+            xaxis: {
+                ...chartsData.workflow_chart.layout.xaxis,
+                gridcolor: 'rgba(255, 255, 255, 0.06)',
+                tickfont: { color: '#94a3b8' }
+            },
+            yaxis: {
+                ...chartsData.workflow_chart.layout.yaxis,
+                gridcolor: 'rgba(255, 255, 255, 0.06)',
+                tickfont: { color: '#94a3b8' }
+            }
+        };
+        Plotly.newPlot("m3-plotly-workflow", chartsData.workflow_chart.data, workflowLayout, {
+            responsive: true,
+            displayModeBar: false
+        });
+    }
+
+    // 4. Mean Time to Resolution (MTTR) by Priority vs SLA Target
+    if (chartsData.mttr_chart && document.getElementById("m3-plotly-mttr")) {
+        const mttrLayout = {
+            ...chartsData.mttr_chart.layout,
+            ...darkLayoutBase,
+            title: '', // Hide internal title (card header displays title instead)
+            xaxis: {
+                ...chartsData.mttr_chart.layout.xaxis,
+                gridcolor: 'rgba(255, 255, 255, 0.06)',
+                tickfont: { color: '#94a3b8' },
+                title: {
+                    ...(typeof chartsData.mttr_chart.layout.xaxis?.title === 'object' ? chartsData.mttr_chart.layout.xaxis.title : { text: chartsData.mttr_chart.layout.xaxis?.title || 'Priority Tier' }),
+                    font: { color: '#cbd5e1' }
+                }
+            },
+            yaxis: {
+                ...chartsData.mttr_chart.layout.yaxis,
+                gridcolor: 'rgba(255, 255, 255, 0.06)',
+                tickfont: { color: '#94a3b8' },
+                title: {
+                    ...(typeof chartsData.mttr_chart.layout.yaxis?.title === 'object' ? chartsData.mttr_chart.layout.yaxis.title : { text: chartsData.mttr_chart.layout.yaxis?.title || 'Resolution Time (Hours)' }),
+                    font: { color: '#cbd5e1' }
+                }
+            },
+            legend: {
+                font: { color: '#f8fafc' },
+                orientation: 'h',
+                y: 1.15,
+                x: 0.5,
+                xanchor: 'center'
+            }
+        };
+        Plotly.newPlot("m3-plotly-mttr", chartsData.mttr_chart.data, mttrLayout, {
+            responsive: true,
+            displayModeBar: false
+        });
+    }
+
+    // 5. Individual Defect Time to Resolution (TTR) Timeline
+    if (chartsData.ttr_chart && document.getElementById("m3-plotly-ttr")) {
+        const ttrLayout = {
+            ...chartsData.ttr_chart.layout,
+            ...darkLayoutBase,
+            title: '', // Hide internal title (card header displays title instead)
+            xaxis: {
+                ...chartsData.ttr_chart.layout.xaxis,
+                gridcolor: 'rgba(255, 255, 255, 0.06)',
+                tickfont: { color: '#94a3b8' },
+                title: {
+                    ...(typeof chartsData.ttr_chart.layout.xaxis?.title === 'object' ? chartsData.ttr_chart.layout.xaxis.title : { text: chartsData.ttr_chart.layout.xaxis?.title || 'Resolved Defect' }),
+                    font: { color: '#cbd5e1' }
+                }
+            },
+            yaxis: {
+                ...chartsData.ttr_chart.layout.yaxis,
+                gridcolor: 'rgba(255, 255, 255, 0.06)',
+                tickfont: { color: '#94a3b8' },
+                title: {
+                    ...(typeof chartsData.ttr_chart.layout.yaxis?.title === 'object' ? chartsData.ttr_chart.layout.yaxis.title : { text: chartsData.ttr_chart.layout.yaxis?.title || 'Time to Resolution (Hours)' }),
+                    font: { color: '#cbd5e1' }
+                }
+            },
+            legend: {
+                font: { color: '#f8fafc' },
+                orientation: 'h',
+                y: 1.15,
+                x: 0.5,
+                xanchor: 'center'
+            }
+        };
+        Plotly.newPlot("m3-plotly-ttr", chartsData.ttr_chart.data, ttrLayout, {
+            responsive: true,
+            displayModeBar: false
+        });
+    }
+}
+
+// Switch between MTTR by Priority view and Individual Defect TTR Timeline view
+function switchMttrView(view) {
+    const elMttr = document.getElementById("m3-plotly-mttr");
+    const elTtr = document.getElementById("m3-plotly-ttr");
+    const btnPri = document.getElementById("btn-mttr-view-priority");
+    const btnTtr = document.getElementById("btn-mttr-view-ttr");
+    const cardTitle = document.getElementById("m3-mttr-card-title");
+    const cardSubtitle = document.getElementById("m3-mttr-card-subtitle");
+
+    if (view === "priority") {
+        if (elMttr) elMttr.style.display = "block";
+        if (elTtr) elTtr.style.display = "none";
+        if (btnPri) { btnPri.classList.add("btn-primary", "active"); btnPri.classList.remove("btn-secondary"); }
+        if (btnTtr) { btnTtr.classList.remove("btn-primary", "active"); btnTtr.classList.add("btn-secondary"); }
+        if (cardTitle) cardTitle.innerHTML = '<i class="fa-solid fa-stopwatch text-progress"></i> Mean Time to Resolution (MTTR) & SLA Performance';
+        if (cardSubtitle) cardSubtitle.innerText = 'Average resolution hours vs engineering SLA benchmarks across priority tiers';
+        if (typeof Plotly !== "undefined" && elMttr) Plotly.Plots.resize(elMttr);
+    } else {
+        if (elMttr) elMttr.style.display = "none";
+        if (elTtr) elTtr.style.display = "block";
+        if (btnTtr) { btnTtr.classList.add("btn-primary", "active"); btnTtr.classList.remove("btn-secondary"); }
+        if (btnPri) { btnPri.classList.remove("btn-primary", "active"); btnPri.classList.add("btn-secondary"); }
+        if (cardTitle) cardTitle.innerHTML = '<i class="fa-solid fa-timeline text-progress"></i> Individual Defect Resolution Time (TTR) Analysis';
+        if (cardSubtitle) cardSubtitle.innerText = 'Time to resolution (hours) per resolved defect compared against target SLA limits';
+        if (typeof Plotly !== "undefined" && elTtr) Plotly.Plots.resize(elTtr);
+    }
+}
+
+// Webhook Simulator
+async function simulateGitWebhook() {
+    const commitMsg = document.getElementById("m3-commit-message")?.value || "fixes #2 login password crash";
+    const commitSha = document.getElementById("m3-commit-sha")?.value || "a7f8c92";
+
+    const consoleBox = document.getElementById("m3-webhook-console");
+    const consoleOutput = document.getElementById("m3-webhook-output");
+    const statusBadge = document.getElementById("m3-webhook-status-badge");
+
+    if (consoleBox) consoleBox.style.display = "block";
+    if (consoleOutput) consoleOutput.innerText = `[CI/CD Sync] Sending webhook request to POST /api/v1/webhooks/git...\nPayload: ${JSON.stringify({ commit_message: commitMsg, commit_hash: commitSha }, null, 2)}`;
+
+    try {
+        const response = await fetch("/api/v1/webhooks/git", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                commit_message: commitMsg,
+                commit_hash: commitSha,
+                author: currentUser?.name || "Developer",
+                branch: "main"
+            })
+        });
+
+        const resData = await response.json();
+
+        if (statusBadge) {
+            statusBadge.innerText = `${response.status} ${response.statusText || 'OK'}`;
+            statusBadge.className = `badge ${response.ok ? 'badge-low' : 'badge-crit'}`;
+        }
+
+        if (consoleOutput) {
+            consoleOutput.innerText = JSON.stringify(resData, null, 2);
+        }
+
+        if (response.ok && resData.success) {
+            const updated = resData.data.updated_issues || [];
+            let detailStr = updated.map(u => `${u.issue_key} (Now: ${u.new_status})`).join(", ");
+            alert(`CI/CD Webhook Success!\n${resData.message}\n${detailStr ? "Auto-transitioned: " + detailStr : "No matching issue keys in message"}`);
+            
+            // Live refresh Milestone 3 metrics and charts
+            loadMilestone3Dashboard();
+
+            // Also reload Agile Workspace and Issues Grid so state change is reflected everywhere
+            if (typeof loadAgileWorkspaceView === "function") loadAgileWorkspaceView();
+            if (typeof loadIssuesGrid === "function") loadIssuesGrid();
+            if (typeof loadDashboardIssues === "function") loadDashboardIssues();
+        } else {
+            alert(`Webhook execution note: ${resData.message || 'Check payload format'}`);
+        }
+    } catch (err) {
+        console.error("Webhook simulation failed:", err);
+        if (consoleOutput) consoleOutput.innerText = `Error: ${err.message}`;
+    }
+}
+
+// REST API Explorer
+function handleApiPresetChange(e) {
+    const val = e.target.value;
+    const parts = val.split("|");
+    const method = parts[0];
+    const url = parts[1];
+
+    const methodLabel = document.getElementById("m3-api-method-label");
+    const urlInput = document.getElementById("m3-api-url-input");
+    const bodyWrapper = document.getElementById("m3-api-body-wrapper");
+    const bodyInput = document.getElementById("m3-api-body-input");
+
+    if (methodLabel) {
+        methodLabel.innerText = method;
+        methodLabel.style.backgroundColor = method === "POST" ? "#f59e0b" : "#2563eb";
+    }
+    if (urlInput) urlInput.value = url;
+
+    if (bodyWrapper) {
+        if (method === "POST") {
+            bodyWrapper.style.display = "block";
+            if (url.includes("webhooks/git")) {
+                bodyInput.value = JSON.stringify({
+                    commit_message: "Merge PR #45: fixes #2 login password crash",
+                    commit_hash: "a7f8c92"
+                }, null, 2);
+            }
+        } else {
+            bodyWrapper.style.display = "none";
+        }
+    }
+}
+
+async function executeApiExplorerRequest() {
+    const urlInput = document.getElementById("m3-api-url-input");
+    const methodLabel = document.getElementById("m3-api-method-label");
+    const bodyInput = document.getElementById("m3-api-body-input");
+    const resStatus = document.getElementById("m3-api-res-status");
+    const resTime = document.getElementById("m3-api-res-time");
+    const resViewer = document.getElementById("m3-api-response-viewer");
+
+    if (!urlInput || !resViewer) return;
+
+    const url = urlInput.value.trim();
+    const method = methodLabel?.innerText || "GET";
+
+    // Check if user is testing a binary download endpoint (PDF/CSV)
+    if (url.includes("/export/pdf")) {
+        exportPdfReport();
+        resViewer.innerText = `// File download initiated: GET ${url}\n// Format: application/pdf (Binary Report)`;
+        if (resStatus) resStatus.innerText = "200 OK";
+        if (resTime) resTime.innerText = "Download triggered";
+        return;
+    }
+
+    resViewer.innerText = `Sending ${method} ${url}...`;
+    const startTime = performance.now();
+
+    try {
+        const headers = {};
+        if (token) headers["Authorization"] = `Bearer ${token}`;
+
+        const options = { method, headers };
+        if (method === "POST") {
+            headers["Content-Type"] = "application/json";
+            if (bodyInput) options.body = bodyInput.value;
+        }
+
+        const response = await fetch(url, options);
+        const elapsed = Math.round(performance.now() - startTime);
+
+        if (resTime) resTime.innerText = `${elapsed} ms`;
+        if (resStatus) {
+            resStatus.innerText = `${response.status} ${response.statusText || 'OK'}`;
+            resStatus.className = `badge ${response.ok ? 'badge-low' : 'badge-crit'}`;
+        }
+
+        const contentType = response.headers.get("content-type") || "";
+        if (contentType.includes("application/json")) {
+            const json = await response.json();
+            resViewer.innerText = JSON.stringify(json, null, 2);
+        } else if (contentType.includes("text/csv") || url.includes("/export/csv")) {
+            const text = await response.text();
+            resViewer.innerText = text;
+        } else {
+            const text = await response.text();
+            resViewer.innerText = text;
+        }
+    } catch (err) {
+        const elapsed = Math.round(performance.now() - startTime);
+        if (resTime) resTime.innerText = `${elapsed} ms`;
+        if (resStatus) {
+            resStatus.innerText = "Network Error";
+            resStatus.className = "badge badge-crit";
+        }
+        resViewer.innerText = `Request Failed: ${err.message}`;
+    }
+}
+
+// PDF & CSV Export Handlers - Direct browser download
+function exportPdfReport() {
+    const pId = activeProjectId ? `?project_id=${activeProjectId}` : "";
+    window.location.href = `/api/v1/export/pdf${pId}`;
+}
+
+function exportCsvReport() {
+    const pId = activeProjectId ? `?project_id=${activeProjectId}` : "";
+    window.location.href = `/api/v1/export/csv${pId}`;
 }
