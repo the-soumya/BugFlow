@@ -89,13 +89,13 @@ function applyTheme(theme, save = true) {
     const headerBtn = document.getElementById("header-theme-toggle");
     if (headerIcon && headerLabel) {
         if (isDark) {
-            headerIcon.className = "fa-solid fa-sun text-warning";
-            headerLabel.innerText = "Light Theme";
-            if (headerBtn) headerBtn.title = "Switch to White / Light Theme";
+            headerIcon.className = "fa-solid fa-moon text-info";
+            headerLabel.innerText = "Dark Mode";
+            if (headerBtn) headerBtn.title = "Current: Dark Mode (Click to switch to Light Theme)";
         } else {
-            headerIcon.className = "fa-solid fa-moon";
-            headerLabel.innerText = "Dark Theme";
-            if (headerBtn) headerBtn.title = "Switch to Dark Theme";
+            headerIcon.className = "fa-solid fa-sun text-warning";
+            headerLabel.innerText = "Light Mode";
+            if (headerBtn) headerBtn.title = "Current: Light Mode (Click to switch to Dark Theme)";
         }
     }
     
@@ -105,13 +105,13 @@ function applyTheme(theme, save = true) {
     const authBtn = document.getElementById("auth-theme-toggle");
     if (authIcon && authLabel) {
         if (isDark) {
-            authIcon.className = "fa-solid fa-sun text-warning";
-            authLabel.innerText = "Light Theme";
-            if (authBtn) authBtn.title = "Switch to White / Light Theme";
+            authIcon.className = "fa-solid fa-moon text-info";
+            authLabel.innerText = "Dark Mode";
+            if (authBtn) authBtn.title = "Current: Dark Mode (Click to switch to Light Theme)";
         } else {
-            authIcon.className = "fa-solid fa-moon";
-            authLabel.innerText = "Dark Theme";
-            if (authBtn) authBtn.title = "Switch to Dark Theme";
+            authIcon.className = "fa-solid fa-sun text-warning";
+            authLabel.innerText = "Light Mode";
+            if (authBtn) authBtn.title = "Current: Light Mode (Click to switch to Dark Theme)";
         }
     }
 }
@@ -121,7 +121,7 @@ function toggleTheme() {
     const nextTheme = (currentTheme === "dark") ? "light" : "dark";
     applyTheme(nextTheme, true);
     if (typeof showToast === "function") {
-        showToast(`Switched to ${nextTheme === "dark" ? "Dark Theme" : "White Theme"}`, "info");
+        showToast(`Switched to ${nextTheme === "dark" ? "Dark Theme" : "Light Theme"}`, "info");
     }
 }
 
@@ -3089,35 +3089,40 @@ function renderMilestone3PlotlyCharts(chartsData) {
         return;
     }
 
-    // Common dark theme layout overrides for seamless aesthetic integration
-    const darkLayoutBase = {
+    // Dynamic theme layout settings for seamless aesthetic integration
+    const isDark = document.documentElement.getAttribute("data-theme") === "dark";
+    const chartLayoutBase = {
         paper_bgcolor: 'rgba(0, 0, 0, 0)',
         plot_bgcolor: 'rgba(0, 0, 0, 0)',
         font: {
             family: 'Inter, Outfit, sans-serif',
-            color: '#94a3b8'
+            color: isDark ? '#94a3b8' : '#475569'
         }
     };
+    const axisGridColor = isDark ? 'rgba(255, 255, 255, 0.06)' : 'rgba(0, 0, 0, 0.06)';
+    const axisZeroColor = isDark ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)';
+    const axisFontColor = isDark ? '#94a3b8' : '#64748b';
+    const legendFontColor = isDark ? '#f8fafc' : '#0f172a';
 
     // 1. Defect Trend (Last 14 Days)
     if (chartsData.trend_chart && document.getElementById("m3-plotly-trend")) {
         const trendLayout = {
             ...chartsData.trend_chart.layout,
-            ...darkLayoutBase,
+            ...chartLayoutBase,
             xaxis: {
                 ...chartsData.trend_chart.layout.xaxis,
-                gridcolor: 'rgba(255, 255, 255, 0.06)',
-                zerolinecolor: 'rgba(255, 255, 255, 0.1)',
-                tickfont: { color: '#94a3b8' }
+                gridcolor: axisGridColor,
+                zerolinecolor: axisZeroColor,
+                tickfont: { color: axisFontColor }
             },
             yaxis: {
                 ...chartsData.trend_chart.layout.yaxis,
-                gridcolor: 'rgba(255, 255, 255, 0.06)',
-                zerolinecolor: 'rgba(255, 255, 255, 0.1)',
-                tickfont: { color: '#94a3b8' }
+                gridcolor: axisGridColor,
+                zerolinecolor: axisZeroColor,
+                tickfont: { color: axisFontColor }
             },
             legend: {
-                font: { color: '#f8fafc' },
+                font: { color: legendFontColor },
                 orientation: 'h',
                 y: 1.15,
                 x: 0.5,
@@ -3134,9 +3139,9 @@ function renderMilestone3PlotlyCharts(chartsData) {
     if (chartsData.severity_chart && document.getElementById("m3-plotly-severity")) {
         const severityLayout = {
             ...chartsData.severity_chart.layout,
-            ...darkLayoutBase,
+            ...chartLayoutBase,
             legend: {
-                font: { color: '#f8fafc' },
+                font: { color: legendFontColor },
                 orientation: 'h',
                 y: -0.15,
                 x: 0.5,
@@ -3153,16 +3158,16 @@ function renderMilestone3PlotlyCharts(chartsData) {
     if (chartsData.workflow_chart && document.getElementById("m3-plotly-workflow")) {
         const workflowLayout = {
             ...chartsData.workflow_chart.layout,
-            ...darkLayoutBase,
+            ...chartLayoutBase,
             xaxis: {
                 ...chartsData.workflow_chart.layout.xaxis,
-                gridcolor: 'rgba(255, 255, 255, 0.06)',
-                tickfont: { color: '#94a3b8' }
+                gridcolor: axisGridColor,
+                tickfont: { color: axisFontColor }
             },
             yaxis: {
                 ...chartsData.workflow_chart.layout.yaxis,
-                gridcolor: 'rgba(255, 255, 255, 0.06)',
-                tickfont: { color: '#94a3b8' }
+                gridcolor: axisGridColor,
+                tickfont: { color: axisFontColor }
             }
         };
         Plotly.newPlot("m3-plotly-workflow", chartsData.workflow_chart.data, workflowLayout, {
@@ -3175,28 +3180,28 @@ function renderMilestone3PlotlyCharts(chartsData) {
     if (chartsData.mttr_chart && document.getElementById("m3-plotly-mttr")) {
         const mttrLayout = {
             ...chartsData.mttr_chart.layout,
-            ...darkLayoutBase,
+            ...chartLayoutBase,
             title: '', // Hide internal title (card header displays title instead)
             xaxis: {
                 ...chartsData.mttr_chart.layout.xaxis,
-                gridcolor: 'rgba(255, 255, 255, 0.06)',
-                tickfont: { color: '#94a3b8' },
+                gridcolor: axisGridColor,
+                tickfont: { color: axisFontColor },
                 title: {
                     ...(typeof chartsData.mttr_chart.layout.xaxis?.title === 'object' ? chartsData.mttr_chart.layout.xaxis.title : { text: chartsData.mttr_chart.layout.xaxis?.title || 'Priority Tier' }),
-                    font: { color: '#cbd5e1' }
+                    font: { color: axisFontColor }
                 }
             },
             yaxis: {
                 ...chartsData.mttr_chart.layout.yaxis,
-                gridcolor: 'rgba(255, 255, 255, 0.06)',
-                tickfont: { color: '#94a3b8' },
+                gridcolor: axisGridColor,
+                tickfont: { color: axisFontColor },
                 title: {
                     ...(typeof chartsData.mttr_chart.layout.yaxis?.title === 'object' ? chartsData.mttr_chart.layout.yaxis.title : { text: chartsData.mttr_chart.layout.yaxis?.title || 'Resolution Time (Hours)' }),
-                    font: { color: '#cbd5e1' }
+                    font: { color: axisFontColor }
                 }
             },
             legend: {
-                font: { color: '#f8fafc' },
+                font: { color: legendFontColor },
                 orientation: 'h',
                 y: 1.15,
                 x: 0.5,
@@ -3213,28 +3218,28 @@ function renderMilestone3PlotlyCharts(chartsData) {
     if (chartsData.ttr_chart && document.getElementById("m3-plotly-ttr")) {
         const ttrLayout = {
             ...chartsData.ttr_chart.layout,
-            ...darkLayoutBase,
+            ...chartLayoutBase,
             title: '', // Hide internal title (card header displays title instead)
             xaxis: {
                 ...chartsData.ttr_chart.layout.xaxis,
-                gridcolor: 'rgba(255, 255, 255, 0.06)',
-                tickfont: { color: '#94a3b8' },
+                gridcolor: axisGridColor,
+                tickfont: { color: axisFontColor },
                 title: {
                     ...(typeof chartsData.ttr_chart.layout.xaxis?.title === 'object' ? chartsData.ttr_chart.layout.xaxis.title : { text: chartsData.ttr_chart.layout.xaxis?.title || 'Resolved Defect' }),
-                    font: { color: '#cbd5e1' }
+                    font: { color: axisFontColor }
                 }
             },
             yaxis: {
                 ...chartsData.ttr_chart.layout.yaxis,
-                gridcolor: 'rgba(255, 255, 255, 0.06)',
-                tickfont: { color: '#94a3b8' },
+                gridcolor: axisGridColor,
+                tickfont: { color: axisFontColor },
                 title: {
                     ...(typeof chartsData.ttr_chart.layout.yaxis?.title === 'object' ? chartsData.ttr_chart.layout.yaxis.title : { text: chartsData.ttr_chart.layout.yaxis?.title || 'Time to Resolution (Hours)' }),
-                    font: { color: '#cbd5e1' }
+                    font: { color: axisFontColor }
                 }
             },
             legend: {
-                font: { color: '#f8fafc' },
+                font: { color: legendFontColor },
                 orientation: 'h',
                 y: 1.15,
                 x: 0.5,
