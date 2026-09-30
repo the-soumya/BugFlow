@@ -6,6 +6,7 @@ from app.models.user import UserRole
 class UserBase(BaseModel):
     name: str = Field(..., min_length=1, max_length=100)
     email: EmailStr
+    team: Optional[str] = "Backend Engineering"
 
 class UserCreate(UserBase):
     password: str = Field(..., min_length=6, max_length=100)
@@ -18,6 +19,7 @@ class UserResponse(BaseModel):
     email: EmailStr
     role: UserRole
     active: bool
+    team: Optional[str] = "Backend Engineering"
     skills: Optional[str] = None
     created_at: datetime
     updated_at: datetime
@@ -30,7 +32,9 @@ class UserMinResponse(BaseModel):
     name: str
     email: EmailStr
     role: UserRole
+    team: Optional[str] = "Backend Engineering"
     skills: Optional[str] = None
 
     class Config:
         from_attributes = True
+

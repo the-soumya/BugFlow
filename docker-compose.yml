@@ -1,0 +1,57 @@
+version: "3.8"
+
+services:
+  db:
+    image: postgres:15-alpine
+    container_name: bugflow-postgres
+    restart: always
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-1601}
+      POSTGRES_DB: ${POSTGRES_DB:-bugflow}
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d bugflow"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - bugflow-network
+
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: bugflow-api
+    restart: always
+    environment:
+      DATABASE_URL: postgresql://postgres:1601@db:5432/bugflow
+      JWT_SECRET: ${JWT_SECRET:-d2bdf7859b897931b2694f57c5eb6ef80e81e352ef29b87fcf30f81dcd3f89ee}
+      JWT_EXPIRATION_MINUTES: 120
+    ports:
+      - "8000:8000"
+    depends_on:
+      db:
+        condition: service_healthy
+    volumes:
+      - ./uploads:/app/uploads
+      - ./static:/app/static
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    networks:
+      - bugflow-network
+
+volumes:
+  postgres_data:
+    driver: local
+
+networks:
+  bugflow-network:
+    driver: bridge

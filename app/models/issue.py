@@ -1,5 +1,5 @@
 import enum
-from sqlalchemy import Column, Integer, String, Enum, DateTime, ForeignKey, Float
+from sqlalchemy import Column, Integer, String, Enum, DateTime, ForeignKey, Float, Index
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 from app.database import Base
@@ -38,6 +38,12 @@ class IssueSeverity(str, enum.Enum):
 
 class Issue(Base):
     __tablename__ = "issues"
+    __table_args__ = (
+        Index("idx_issue_project_status", "project_id", "status"),
+        Index("idx_issue_assignee_status", "assignee_id", "status"),
+        Index("idx_issue_created_at", "created_at"),
+        Index("idx_issue_sprint_status", "sprint_id", "status"),
+    )
 
     id = Column(Integer, primary_key=True, index=True)
     issue_key = Column(String(50), unique=True, index=True, nullable=False)

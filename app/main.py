@@ -21,9 +21,9 @@ async def lifespan(app: FastAPI):
 
 # Initialize FastAPI App
 app = FastAPI(
-    title="BugFlow - Software Issue Tracking & Resolution Platform",
-    description="Layered Issue Tracking Platform: Core Foundation, Agile Workflow, Quality Metrics & Automated CI/CD Webhooks",
-    version="3.0.0",
+    title="BugFlow - Enterprise Issue Tracking & Resolution Platform",
+    description="High-Performance Issue Tracking: Core Foundation, Agile Collaboration, Quality Metrics, CI/CD Webhooks & Database Optimization",
+    version="4.0.0",
     lifespan=lifespan
 )
 
@@ -68,10 +68,65 @@ if not os.path.exists(uploads_dir):
 
 app.mount("/uploads", StaticFiles(directory=uploads_dir), name="uploads")
 
-# Catch-all route to serve the SPA index.html
+# Health check endpoint for containerization, uptime monitoring, and SLA verification
+@app.get("/health")
+def health_check():
+    from app.database import engine
+    from sqlalchemy import text
+    try:
+        with engine.connect() as conn:
+            conn.execute(text("SELECT 1"))
+        db_type = "postgresql" if "postgresql" in str(engine.url) else "sqlite"
+        return {
+            "status": "healthy",
+            "database": db_type,
+            "version": "4.0.0",
+            "pool": {
+                "pool_size": 20,
+                "max_overflow": 10,
+                "pool_pre_ping": True
+            }
+        }
+    except Exception as e:
+        return {
+            "status": "unhealthy",
+            "database": "disconnected",
+            "error": str(e)
+        }
+
+# SPA Route serving for normal URLs (Dashboard, Issues, Sprints, Analytics, etc.)
 @app.get("/")
+@app.get("/dashboard")
+@app.get("/issues")
+@app.get("/my-issues")
+@app.get("/report-issue")
+@app.get("/resolution-assistance")
+@app.get("/sprints")
+@app.get("/projects")
+@app.get("/team")
+@app.get("/reports")
+@app.get("/analytics")
+@app.get("/optimization")
 def serve_spa():
     index_path = os.path.join(static_dir, "index.html")
     if os.path.exists(index_path):
         return FileResponse(index_path)
     return {"message": "BugFlow Backend is running. Frontend static/index.html is missing."}
+
+# Published Documentation Endpoints (Milestone 4 Requirement)
+@app.get("/deployment-guide")
+def get_deployment_guide():
+    guide_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), "DEPLOYMENT_GUIDE.md")
+    return FileResponse(guide_path, media_type="text/markdown")
+
+@app.get("/user-guide")
+def get_user_guide():
+    guide_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), "USER_GUIDE.md")
+    return FileResponse(guide_path, media_type="text/markdown")
+
+@app.get("/api-docs-file")
+def get_api_docs_file():
+    docs_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), "API_DOCUMENTATION.md")
+    return FileResponse(docs_path, media_type="text/markdown")
+
+

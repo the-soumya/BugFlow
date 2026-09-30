@@ -22,6 +22,11 @@ db.sqlite3
 # Uploads (user-generated content)
 uploads/
 
+# Test cache
+.pytest_cache/
+
 # OS files
 .DS_Store
 Thumbs.db
+
+

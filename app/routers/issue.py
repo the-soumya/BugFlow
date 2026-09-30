@@ -54,11 +54,16 @@ def get_project_issues(
     assignee: Optional[int] = Query(None, alias="assignee"),
     reporter: Optional[int] = Query(None, alias="reporter"),
     issueType: Optional[IssueType] = Query(None, alias="issueType"),
+    skip: Optional[int] = Query(None, ge=0),
+    limit: Optional[int] = Query(None, ge=1, le=100),
     page: int = Query(0, ge=0),
-    size: int = Query(10, ge=1, le=100),
+    size: int = Query(20, ge=1, le=100),
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
+    effective_limit = limit if limit is not None else size
+    effective_page = (skip // effective_limit) if skip is not None else page
+    
     issues, total = issue_service.get_project_issues(
         db,
         projectId,
@@ -68,8 +73,8 @@ def get_project_issues(
         assignee,
         issueType,
         reporter,
-        page,
-        size
+        effective_page,
+        effective_limit
     )
 
     response_data = [
@@ -77,7 +82,7 @@ def get_project_issues(
         for i in issues
     ]
 
-    total_pages = (total + size - 1) // size if total > 0 else 0
+    total_pages = (total + effective_limit - 1) // effective_limit if total > 0 else 0
 
     return ApiResponse(
         success=True,
@@ -86,8 +91,10 @@ def get_project_issues(
             "content": response_data,
             "totalElements": total,
             "totalPages": total_pages,
-            "pageNumber": page,
-            "pageSize": size
+            "pageNumber": effective_page,
+            "pageSize": effective_limit,
+            "skip": skip if skip is not None else (effective_page * effective_limit),
+            "limit": effective_limit
         }
     )
 
@@ -109,15 +116,21 @@ def list_all_issues(
     assignee: Optional[int] = Query(None, alias="assignee"),
     reporter: Optional[int] = Query(None, alias="reporter"),
     issueType: Optional[IssueType] = Query(None, alias="issueType"),
+    skip: Optional[int] = Query(None, ge=0),
+    limit: Optional[int] = Query(None, ge=1, le=100),
     page: int = Query(0, ge=0),
-    size: int = Query(10, ge=1, le=100),
+    size: int = Query(20, ge=1, le=100),
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
     target_project_id = projectId if projectId is not None else project_id
+    effective_limit = limit if limit is not None else size
+    effective_offset = skip if skip is not None else (page * effective_limit)
+    effective_page = (skip // effective_limit) if skip is not None else page
+
     if target_project_id is not None:
         issues, total = issue_service.get_project_issues(
-            db, target_project_id, status, priority, severity, assignee, issueType, reporter, page, size
+            db, target_project_id, status, priority, severity, assignee, issueType, reporter, effective_page, effective_limit
         )
     else:
         from app.models.issue import Issue
@@ -135,14 +148,14 @@ def list_all_issues(
         if issueType:
             query = query.filter(Issue.issue_type == issueType)
         total = query.count()
-        issues = query.order_by(Issue.created_at.desc()).offset(page * size).limit(size).all()
+        issues = query.order_by(Issue.created_at.desc()).offset(effective_offset).limit(effective_limit).all()
 
     response_data = [
         IssueResponse.model_validate(i)
         for i in issues
     ]
 
-    total_pages = (total + size - 1) // size if total > 0 else 0
+    total_pages = (total + effective_limit - 1) // effective_limit if total > 0 else 0
 
     return ApiResponse(
         success=True,
@@ -151,10 +164,13 @@ def list_all_issues(
             "content": response_data,
             "totalElements": total,
             "totalPages": total_pages,
-            "pageNumber": page,
-            "pageSize": size
+            "pageNumber": effective_page,
+            "pageSize": effective_limit,
+            "skip": effective_offset,
+            "limit": effective_limit
         }
     )
+
 
 
 @router.get(
@@ -299,12 +315,17 @@ def assign_issue(
     "/api/issues/{id}/status",
     response_model=ApiResponse[IssueResponse]
 )
+@router.patch(
+    "/api/issues/{id}/status",
+    response_model=ApiResponse[IssueResponse]
+)
 def update_issue_status(
     id: int,
     request: StatusUpdateRequest,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
+
     issue = issue_service.get_issue(db, id)
 
     if (
